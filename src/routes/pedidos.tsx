@@ -41,6 +41,9 @@ function PedidosPage() {
   const { orders, updateStatus } = useOrders();
   const { customers } = useCustomers();
 
+  const { user } = useSession();
+  const canCreate = hasPermission(user, "orders.create");
+
   const [novoOpen, setNovoOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [selected, setSelected] = useState<Order | undefined>();
@@ -51,10 +54,18 @@ function PedidosPage() {
   const [sellerFilter, setSellerFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
-  useUIEvent("order:new", () => setNovoOpen(true));
+  useUIEvent("order:new", () => {
+    if (canCreate) setNovoOpen(true);
+  });
+
+  // Escopo por perfil: seller só enxerga os próprios pedidos.
+  const scoped = useMemo(
+    () => orders.filter((o) => canAccessOrder(user, o)),
+    [orders, user],
+  );
 
   const filtered = useMemo(() => {
-    return orders.filter((o) => {
+    return scoped.filter((o) => {
       if (from && o.orderDate < from) return false;
       if (to && o.orderDate > to) return false;
       if (customerFilter !== "all" && o.customerId !== customerFilter) return false;
@@ -62,10 +73,18 @@ function PedidosPage() {
       if (statusFilter !== "all" && o.status !== statusFilter) return false;
       return true;
     });
-  }, [orders, from, to, customerFilter, sellerFilter, statusFilter]);
+  }, [scoped, from, to, customerFilter, sellerFilter, statusFilter]);
 
   const customerName = (id: string) =>
     customers.find((c) => c.id === id)?.legalName ?? "—";
+
+  const handleCancel = (o: Order) => {
+    // Validação real — não confiar só em esconder o botão.
+    assertPermission(user, "orders.cancel");
+    if (!canCancelOrder(user, o)) return;
+    updateStatus(o.id, "cancelled");
+  };
+
 
   const columns: Column<Order>[] = [
     {
