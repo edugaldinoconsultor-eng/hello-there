@@ -16,8 +16,11 @@ export function Header({
   const navigate = useNavigate();
   const openNewCustomer = async () => {
     await navigate({ to: "/clientes" });
-    // dispara após a rota montar o listener
     setTimeout(() => emitUIEvent("customer:new"), 0);
+  };
+  const openNewOrder = async () => {
+    await navigate({ to: "/pedidos" });
+    setTimeout(() => emitUIEvent("order:new"), 0);
   };
   return (
     <header className="flex h-14 shrink-0 items-center gap-3 border-b border-border bg-background/60 px-4 backdrop-blur">
@@ -38,7 +41,7 @@ export function Header({
           <UserPlus className="h-3.5 w-3.5" />
           <span className="hidden sm:inline">Novo cliente</span>
         </Button>
-        <Button size="sm" className="gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90">
+        <Button size="sm" className="gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90" onClick={openNewOrder}>
           <Plus className="h-3.5 w-3.5" />
           <span className="hidden sm:inline">Novo pedido</span>
         </Button>
