@@ -34,7 +34,7 @@ export function Header({
       </div>
 
       <div className="ml-auto flex items-center gap-2">
-        <Button variant="outline" size="sm" className="gap-1.5">
+        <Button variant="outline" size="sm" className="gap-1.5" onClick={openNewCustomer}>
           <UserPlus className="h-3.5 w-3.5" />
           <span className="hidden sm:inline">Novo cliente</span>
         </Button>
