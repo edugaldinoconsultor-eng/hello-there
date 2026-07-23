@@ -37,9 +37,9 @@ import { maskCurrencyBRL, maskCpfCnpj, maskPhoneBR, onlyDigits, parseCurrencyBRL
 import {
   MOCK_SALESPEOPLE, PAYMENT_TERMS, PRICE_TABLES,
 } from "@/lib/customer-schema";
-import { useCustomers, type Customer } from "@/mocks/customers";
-import { useProducts, type Product } from "@/mocks/products";
-import { useOrders } from "@/mocks/orders";
+import { useCustomers, type Customer } from "@/services/customers.service";
+import { useProducts, type Product } from "@/services/products.service";
+import { useOrders } from "@/services/orders.service";
 import {
   DELIVERY_METHOD_LABEL, PAYMENT_CONDITION_LABEL, SALE_TYPE_LABEL,
   type DeliveryMethod, type OrderDelivery, type OrderInstallment, type OrderItem,

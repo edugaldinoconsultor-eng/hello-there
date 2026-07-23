@@ -50,7 +50,7 @@ import {
   parseCurrencyBRL,
   onlyDigits,
 } from "@/lib/masks";
-import { useCustomers } from "@/mocks/customers";
+import { useCustomers } from "@/services/customers.service";
 import { cn } from "@/lib/utils";
 
 const defaultValues: CustomerFormValues = {
