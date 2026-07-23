@@ -125,14 +125,15 @@ function PedidosPage() {
           >
             <Eye className="h-4 w-4" />
           </Button>
-          {o.status !== "cancelled" && (
+          {canCancelOrder(user, o) && (
             <Button
               variant="ghost" size="icon" aria-label="Cancelar pedido"
-              onClick={() => updateStatus(o.id, "cancelled")}
+              onClick={() => handleCancel(o)}
             >
               <Ban className="h-4 w-4 text-muted-foreground" />
             </Button>
           )}
+
         </div>
       ),
     },
