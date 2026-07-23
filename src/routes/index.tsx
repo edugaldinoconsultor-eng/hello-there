@@ -133,7 +133,7 @@ function TodayPage() {
       {/* Greeting */}
       <header>
         <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight text-foreground">
-          Bom dia, {currentUser.name.split(" ")[0]} <span aria-hidden>👋</span>
+          Bom dia, {user.name.split(" ")[0]} <span aria-hidden>👋</span>
         </h1>
         <p className="mt-1 text-xs text-muted-foreground">{capToday}</p>
       </header>
