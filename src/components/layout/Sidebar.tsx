@@ -13,7 +13,9 @@ import {
   Store,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { currentUser, currentCompany } from "@/mocks/session";
+import { useSession, currentCompany, ROLE_LABEL } from "@/mocks/session";
+import { canAccessRoute } from "@/lib/permissions";
+import { DevRoleSwitcher } from "@/components/auth/DevRoleSwitcher";
 
 type NavItem = {
   label: string;
@@ -34,6 +36,10 @@ const nav: NavItem[] = [
 
 export function Sidebar({ open }: { open: boolean; onToggle: () => void }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { user } = useSession();
+
+  const visibleNav = nav.filter((item) => canAccessRoute(user, item.to));
+  const canSettings = canAccessRoute(user, "/configuracoes");
 
   return (
     <aside
@@ -70,7 +76,7 @@ export function Sidebar({ open }: { open: boolean; onToggle: () => void }) {
 
       {/* Nav */}
       <nav className="flex-1 space-y-0.5 px-2 py-4">
-        {nav.map((item) => {
+        {visibleNav.map((item) => {
           const active =
             item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
           const Icon = item.icon;
@@ -103,18 +109,25 @@ export function Sidebar({ open }: { open: boolean; onToggle: () => void }) {
         })}
       </nav>
 
+      {/* Dev switcher */}
+      <div className="border-t border-sidebar-border px-2 pt-3">
+        <DevRoleSwitcher collapsed={!open} />
+      </div>
+
       {/* Settings + user */}
       <div className="border-t border-sidebar-border px-2 py-3">
-        <Link
-          to="/configuracoes"
-          className={cn(
-            "flex items-center gap-3 rounded-md px-2 py-2 text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent/60",
-            !open && "justify-center",
-          )}
-        >
-          <Settings className="h-4 w-4 text-muted-foreground" />
-          {open && <span>Configurações</span>}
-        </Link>
+        {canSettings && (
+          <Link
+            to="/configuracoes"
+            className={cn(
+              "flex items-center gap-3 rounded-md px-2 py-2 text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent/60",
+              !open && "justify-center",
+            )}
+          >
+            <Settings className="h-4 w-4 text-muted-foreground" />
+            {open && <span>Configurações</span>}
+          </Link>
+        )}
 
         <div
           className={cn(
@@ -123,15 +136,15 @@ export function Sidebar({ open }: { open: boolean; onToggle: () => void }) {
           )}
         >
           <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/20 text-xs font-semibold text-primary">
-            {currentUser.initials}
+            {user.initials}
           </div>
           {open && (
             <div className="min-w-0 flex-1">
               <div className="truncate text-xs font-medium text-foreground">
-                {currentUser.name}
+                {user.name}
               </div>
               <div className="truncate text-[10px] text-muted-foreground">
-                {currentUser.role}
+                {ROLE_LABEL[user.role]}
               </div>
             </div>
           )}
