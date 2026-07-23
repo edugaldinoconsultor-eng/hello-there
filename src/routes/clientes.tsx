@@ -100,12 +100,8 @@ function ClientesPage() {
           icon={Users}
           title="Nenhum cliente cadastrado ainda"
           description="Cadastre o primeiro cliente para começar a lançar pedidos, acompanhar recompras e alimentar as recomendações da Soul AI."
-          action={
-            <Button size="sm" className="gap-1.5" onClick={() => setOpen(true)}>
-              <Plus className="h-3.5 w-3.5" />
-              Novo cliente
-            </Button>
-          }
+          action={{ label: "Novo cliente", onClick: () => setOpen(true) }}
+
         />
       ) : (
         <section className="rounded-lg border border-border bg-card">
