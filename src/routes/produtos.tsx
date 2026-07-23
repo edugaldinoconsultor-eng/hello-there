@@ -5,6 +5,8 @@ import { DataTable, type Column } from "@/components/shared/DataTable";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { useProducts, type Product } from "@/mocks/products";
 import { formatBRL } from "@/lib/order-calc";
+import { RequirePermission } from "@/components/auth/RequirePermission";
+
 
 export const Route = createFileRoute("/produtos")({
   head: () => ({
@@ -50,20 +52,23 @@ function ProdutosPage() {
   ];
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Produtos</h1>
-        <p className="text-xs text-muted-foreground">
-          {products.length} produto{products.length === 1 ? "" : "s"} disponível{products.length === 1 ? "" : "eis"} para pedidos.
-        </p>
+    <RequirePermission permission="products.view">
+      <div className="space-y-4">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Produtos</h1>
+          <p className="text-xs text-muted-foreground">
+            {products.length} produto{products.length === 1 ? "" : "s"} disponível{products.length === 1 ? "" : "eis"} para pedidos.
+          </p>
+        </div>
+        {products.length === 0 ? (
+          <EmptyState icon={Package} title="Nenhum produto cadastrado" />
+        ) : (
+          <section className="rounded-lg border border-border bg-card">
+            <DataTable columns={columns} data={products} />
+          </section>
+        )}
       </div>
-      {products.length === 0 ? (
-        <EmptyState icon={Package} title="Nenhum produto cadastrado" />
-      ) : (
-        <section className="rounded-lg border border-border bg-card">
-          <DataTable columns={columns} data={products} />
-        </section>
-      )}
-    </div>
+    </RequirePermission>
   );
+
 }

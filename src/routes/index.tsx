@@ -30,7 +30,9 @@ import {
   recentOrders,
   type RecentOrder,
 } from "@/mocks/home";
-import { currentUser } from "@/mocks/session";
+import { useSession } from "@/mocks/session";
+
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -72,6 +74,7 @@ const attentionMeta: Record<
 };
 
 function TodayPage() {
+  const { user } = useSession();
   const today = new Date().toLocaleDateString("pt-BR", {
     weekday: "long",
     day: "2-digit",
@@ -79,6 +82,7 @@ function TodayPage() {
     year: "numeric",
   });
   const capToday = today.charAt(0).toUpperCase() + today.slice(1);
+
 
   const columns: Column<RecentOrder>[] = [
     {
@@ -129,7 +133,7 @@ function TodayPage() {
       {/* Greeting */}
       <header>
         <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight text-foreground">
-          Bom dia, {currentUser.name.split(" ")[0]} <span aria-hidden>👋</span>
+          Bom dia, {user.name.split(" ")[0]} <span aria-hidden>👋</span>
         </h1>
         <p className="mt-1 text-xs text-muted-foreground">{capToday}</p>
       </header>

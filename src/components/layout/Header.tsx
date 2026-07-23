@@ -3,6 +3,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { SearchInput } from "@/components/shared/SearchInput";
 import { emitUIEvent } from "@/lib/ui-events";
+import { Can } from "@/components/auth/RequirePermission";
 
 export function Header({
   onToggleSidebar,
@@ -37,14 +38,18 @@ export function Header({
       </div>
 
       <div className="ml-auto flex items-center gap-2">
-        <Button variant="outline" size="sm" className="gap-1.5" onClick={openNewCustomer}>
-          <UserPlus className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline">Novo cliente</span>
-        </Button>
-        <Button size="sm" className="gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90" onClick={openNewOrder}>
-          <Plus className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline">Novo pedido</span>
-        </Button>
+        <Can permission="customers.create">
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={openNewCustomer}>
+            <UserPlus className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Novo cliente</span>
+          </Button>
+        </Can>
+        <Can permission="orders.create">
+          <Button size="sm" className="gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90" onClick={openNewOrder}>
+            <Plus className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Novo pedido</span>
+          </Button>
+        </Can>
         {!aiOpen && (
           <button
             onClick={onToggleAI}
@@ -60,5 +65,4 @@ export function Header({
   );
 }
 
-// Re-export icon for callers that want a consistent search glyph
 export { SearchIcon };
