@@ -288,7 +288,7 @@ export function NovoClienteModal({
                 )}
 
                 <div>
-                  <FieldLabel htmlFor="document" required>
+                  <FieldLabel htmlFor="document">
                     {personType === "PJ" ? "CNPJ" : "CPF"}
                   </FieldLabel>
                   <div className="flex gap-2">
@@ -407,8 +407,14 @@ export function NovoClienteModal({
                 </div>
 
                 <div className="md:col-span-3">
-                  <FieldLabel htmlFor="street">Rua</FieldLabel>
-                  <Input id="street" {...register("address.street")} />
+                  <FieldLabel htmlFor="street" required>Endereço</FieldLabel>
+                  <Input
+                    id="street"
+                    placeholder="Rua, avenida, logradouro…"
+                    {...register("address.street")}
+                    aria-invalid={!!errors.address?.street}
+                  />
+                  <FieldError message={errors.address?.street?.message} />
                 </div>
                 <div className="md:col-span-1">
                   <FieldLabel htmlFor="number">Número</FieldLabel>
