@@ -18,13 +18,16 @@ export const Route = createFileRoute("/financeiro")({
 
 function FinanceiroPage() {
   return (
-    <div className="space-y-4">
-      <h1 className="text-2xl font-semibold tracking-tight text-foreground">Financeiro</h1>
-      <EmptyState
-        icon={DollarSign}
-        title="Módulo Financeiro em preparação"
-        description="Contas a receber, pagar e conciliação serão implementados na próxima etapa."
-      />
-    </div>
+    <RequirePermission permission="finance.view">
+      <div className="space-y-4">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Financeiro</h1>
+        <EmptyState
+          icon={DollarSign}
+          title="Módulo Financeiro em preparação"
+          description="Contas a receber, pagar e conciliação serão implementados na próxima etapa."
+        />
+      </div>
+    </RequirePermission>
   );
 }
+

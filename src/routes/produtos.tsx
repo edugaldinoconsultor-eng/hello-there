@@ -5,6 +5,8 @@ import { DataTable, type Column } from "@/components/shared/DataTable";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { useProducts, type Product } from "@/mocks/products";
 import { formatBRL } from "@/lib/order-calc";
+import { RequirePermission } from "@/components/auth/RequirePermission";
+
 
 export const Route = createFileRoute("/produtos")({
   head: () => ({
