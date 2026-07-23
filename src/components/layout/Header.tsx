@@ -1,6 +1,8 @@
 import { Menu, Plus, Search as SearchIcon, Sparkles, UserPlus } from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { SearchInput } from "@/components/shared/SearchInput";
+import { emitUIEvent } from "@/lib/ui-events";
 
 export function Header({
   onToggleSidebar,
@@ -11,6 +13,12 @@ export function Header({
   onToggleAI: () => void;
   aiOpen: boolean;
 }) {
+  const navigate = useNavigate();
+  const openNewCustomer = async () => {
+    await navigate({ to: "/clientes" });
+    // dispara após a rota montar o listener
+    setTimeout(() => emitUIEvent("customer:new"), 0);
+  };
   return (
     <header className="flex h-14 shrink-0 items-center gap-3 border-b border-border bg-background/60 px-4 backdrop-blur">
       <button
@@ -26,7 +34,7 @@ export function Header({
       </div>
 
       <div className="ml-auto flex items-center gap-2">
-        <Button variant="outline" size="sm" className="gap-1.5">
+        <Button variant="outline" size="sm" className="gap-1.5" onClick={openNewCustomer}>
           <UserPlus className="h-3.5 w-3.5" />
           <span className="hidden sm:inline">Novo cliente</span>
         </Button>
