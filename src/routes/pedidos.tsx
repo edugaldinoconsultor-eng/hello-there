@@ -140,85 +140,92 @@ function PedidosPage() {
   ];
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Pedidos</h1>
-          <p className="text-xs text-muted-foreground">
-            {orders.length} pedido{orders.length === 1 ? "" : "s"} · {filtered.length} filtrado{filtered.length === 1 ? "" : "s"}
-          </p>
+    <RequirePermission permission="orders.view">
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">Pedidos</h1>
+            <p className="text-xs text-muted-foreground">
+              {scoped.length} pedido{scoped.length === 1 ? "" : "s"} · {filtered.length} filtrado{filtered.length === 1 ? "" : "s"}
+            </p>
+          </div>
+          <Can permission="orders.create">
+            <Button size="sm" className="gap-1.5" onClick={() => setNovoOpen(true)}>
+              <Plus className="h-3.5 w-3.5" /> Novo pedido
+            </Button>
+          </Can>
         </div>
-        <Button size="sm" className="gap-1.5" onClick={() => setNovoOpen(true)}>
-          <Plus className="h-3.5 w-3.5" /> Novo pedido
-        </Button>
-      </div>
 
-      {orders.length === 0 ? (
-        <EmptyState
-          icon={ShoppingCart}
-          title="Nenhum pedido encontrado"
-          description="Crie o primeiro pedido para começar a acompanhar vendas, pagamentos e entregas."
-          action={{ label: "Criar primeiro pedido", onClick: () => setNovoOpen(true) }}
+        {scoped.length === 0 ? (
+          <EmptyState
+            icon={ShoppingCart}
+            title="Nenhum pedido encontrado"
+            description="Crie o primeiro pedido para começar a acompanhar vendas, pagamentos e entregas."
+            action={canCreate ? { label: "Criar primeiro pedido", onClick: () => setNovoOpen(true) } : undefined}
+          />
+        ) : (
+          <>
+            <section className="grid grid-cols-2 gap-2 rounded-lg border border-border bg-card p-3 md:grid-cols-5">
+              <div>
+                <label className="text-[10px] uppercase text-muted-foreground">De</label>
+                <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+              </div>
+              <div>
+                <label className="text-[10px] uppercase text-muted-foreground">Até</label>
+                <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
+              </div>
+              <div>
+                <label className="text-[10px] uppercase text-muted-foreground">Cliente</label>
+                <Select value={customerFilter} onValueChange={setCustomerFilter}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    {customers.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>{c.legalName}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {hasPermission(user, "orders.view.all") && (
+                <div>
+                  <label className="text-[10px] uppercase text-muted-foreground">Vendedor</label>
+                  <Select value={sellerFilter} onValueChange={setSellerFilter}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos</SelectItem>
+                      {MOCK_SALESPEOPLE.map((s) => (
+                        <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              <div>
+                <label className="text-[10px] uppercase text-muted-foreground">Status</label>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    {(Object.keys(ORDER_STATUS_LABEL) as OrderStatus[]).map((s) => (
+                      <SelectItem key={s} value={s}>{ORDER_STATUS_LABEL[s]}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </section>
+
+            <section className="rounded-lg border border-border bg-card">
+              <DataTable columns={columns} data={filtered} />
+            </section>
+          </>
+        )}
+
+        <NovoPedidoModal open={novoOpen} onOpenChange={setNovoOpen} />
+        <PedidoDetalhesModal
+          open={detailsOpen} onOpenChange={setDetailsOpen} order={selected}
         />
-      ) : (
-        <>
-          <section className="grid grid-cols-2 gap-2 rounded-lg border border-border bg-card p-3 md:grid-cols-5">
-            <div>
-              <label className="text-[10px] uppercase text-muted-foreground">De</label>
-              <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
-            </div>
-            <div>
-              <label className="text-[10px] uppercase text-muted-foreground">Até</label>
-              <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
-            </div>
-            <div>
-              <label className="text-[10px] uppercase text-muted-foreground">Cliente</label>
-              <Select value={customerFilter} onValueChange={setCustomerFilter}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  {customers.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>{c.legalName}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="text-[10px] uppercase text-muted-foreground">Vendedor</label>
-              <Select value={sellerFilter} onValueChange={setSellerFilter}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  {MOCK_SALESPEOPLE.map((s) => (
-                    <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="text-[10px] uppercase text-muted-foreground">Status</label>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  {(Object.keys(ORDER_STATUS_LABEL) as OrderStatus[]).map((s) => (
-                    <SelectItem key={s} value={s}>{ORDER_STATUS_LABEL[s]}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </section>
-
-          <section className="rounded-lg border border-border bg-card">
-            <DataTable columns={columns} data={filtered} />
-          </section>
-        </>
-      )}
-
-      <NovoPedidoModal open={novoOpen} onOpenChange={setNovoOpen} />
-      <PedidoDetalhesModal
-        open={detailsOpen} onOpenChange={setDetailsOpen} order={selected}
-      />
-    </div>
+      </div>
+    </RequirePermission>
   );
 }
+
