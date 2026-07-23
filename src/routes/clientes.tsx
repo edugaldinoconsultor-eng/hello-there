@@ -81,39 +81,46 @@ function ClientesPage() {
     },
   ];
 
+  const { user } = useSession();
+  const canCreate = hasPermission(user, "customers.create");
+
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-            Clientes
-          </h1>
-          <p className="text-xs text-muted-foreground">
-            {customers.length} cliente{customers.length === 1 ? "" : "s"} cadastrado
-            {customers.length === 1 ? "" : "s"}.
-          </p>
+    <RequirePermission permission="customers.view">
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+              Clientes
+            </h1>
+            <p className="text-xs text-muted-foreground">
+              {customers.length} cliente{customers.length === 1 ? "" : "s"} cadastrado
+              {customers.length === 1 ? "" : "s"}.
+            </p>
+          </div>
+          <Can permission="customers.create">
+            <Button size="sm" className="gap-1.5" onClick={() => setOpen(true)}>
+              <Plus className="h-3.5 w-3.5" />
+              Novo cliente
+            </Button>
+          </Can>
         </div>
-        <Button size="sm" className="gap-1.5" onClick={() => setOpen(true)}>
-          <Plus className="h-3.5 w-3.5" />
-          Novo cliente
-        </Button>
+
+        {customers.length === 0 ? (
+          <EmptyState
+            icon={Users}
+            title="Nenhum cliente cadastrado ainda"
+            description="Cadastre o primeiro cliente para começar a lançar pedidos, acompanhar recompras e alimentar as recomendações da Soul AI."
+            action={canCreate ? { label: "Novo cliente", onClick: () => setOpen(true) } : undefined}
+          />
+        ) : (
+          <section className="rounded-lg border border-border bg-card">
+            <DataTable columns={columns} data={customers} />
+          </section>
+        )}
+
+        <NovoClienteModal open={open} onOpenChange={setOpen} />
       </div>
-
-      {customers.length === 0 ? (
-        <EmptyState
-          icon={Users}
-          title="Nenhum cliente cadastrado ainda"
-          description="Cadastre o primeiro cliente para começar a lançar pedidos, acompanhar recompras e alimentar as recomendações da Soul AI."
-          action={{ label: "Novo cliente", onClick: () => setOpen(true) }}
-
-        />
-      ) : (
-        <section className="rounded-lg border border-border bg-card">
-          <DataTable columns={columns} data={customers} />
-        </section>
-      )}
-
-      <NovoClienteModal open={open} onOpenChange={setOpen} />
-    </div>
+    </RequirePermission>
   );
+
 }
