@@ -11,8 +11,8 @@ import { DataTable, type Column } from "@/components/shared/DataTable";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { NovoPedidoModal } from "@/components/orders/NovoPedidoModal";
 import { PedidoDetalhesModal } from "@/components/orders/PedidoDetalhesModal";
-import { useOrders } from "@/mocks/orders";
-import { useCustomers } from "@/mocks/customers";
+import { useOrders } from "@/services/orders.service";
+import { useCustomers } from "@/services/customers.service";
 import { MOCK_SALESPEOPLE } from "@/lib/customer-schema";
 import { formatBRL, formatDateBR } from "@/lib/order-calc";
 import {

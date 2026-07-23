@@ -3,7 +3,7 @@ import { Package } from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { DataTable, type Column } from "@/components/shared/DataTable";
 import { StatusBadge } from "@/components/shared/StatusBadge";
-import { useProducts, type Product } from "@/mocks/products";
+import { useProducts, type Product } from "@/services/products.service";
 import { formatBRL } from "@/lib/order-calc";
 import { RequirePermission } from "@/components/auth/RequirePermission";
 

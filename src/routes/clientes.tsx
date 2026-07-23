@@ -6,7 +6,7 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { DataTable, type Column } from "@/components/shared/DataTable";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { NovoClienteModal } from "@/components/customers/NovoClienteModal";
-import { useCustomers, type Customer } from "@/mocks/customers";
+import { useCustomers, type Customer } from "@/services/customers.service";
 import { maskCpfCnpj, maskPhoneBR } from "@/lib/masks";
 import { useUIEvent } from "@/lib/ui-events";
 import { RequirePermission, Can } from "@/components/auth/RequirePermission";

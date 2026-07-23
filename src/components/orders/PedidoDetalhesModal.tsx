@@ -12,7 +12,7 @@ import {
   DELIVERY_METHOD_LABEL, ORDER_STATUS_BADGE, ORDER_STATUS_LABEL,
   PAYMENT_CONDITION_LABEL, SALE_TYPE_LABEL, type Order,
 } from "@/lib/order-types";
-import { useCustomers } from "@/mocks/customers";
+import { useCustomers } from "@/services/customers.service";
 
 export function PedidoDetalhesModal({
   order, open, onOpenChange,
