@@ -41,9 +41,9 @@ export type CustomerAddress = {
 export type CustomerCommercial = {
   salespersonId?: string;
   salespersonName?: string;
-  priceTable: PriceTable;
-  creditLimit: number; // BRL
-  paymentTerm: PaymentTerm;
+  priceTable?: PriceTable;
+  creditLimit?: number; // BRL
+  paymentTerm?: PaymentTerm;
   notes?: string;
 };
 
@@ -75,7 +75,7 @@ export type Customer = {
   personType: PersonType;
   legalName: string; // Nome / Razão Social
   tradeName?: string; // Nome Fantasia
-  document: string; // CPF ou CNPJ (somente dígitos)
+  document?: string; // CPF ou CNPJ (somente dígitos) — opcional
   phone: string; // somente dígitos
   email?: string;
 
