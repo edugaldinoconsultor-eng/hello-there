@@ -45,7 +45,7 @@ function ClientesPage() {
     {
       key: "document",
       header: "CPF/CNPJ",
-      render: (c) => <span className="text-muted-foreground">{maskCpfCnpj(c.document)}</span>,
+      render: (c) => <span className="text-muted-foreground">{c.document ? maskCpfCnpj(c.document) : "—"}</span>,
     },
     {
       key: "phone",
