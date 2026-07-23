@@ -9,6 +9,10 @@ import { NovoClienteModal } from "@/components/customers/NovoClienteModal";
 import { useCustomers, type Customer } from "@/mocks/customers";
 import { maskCpfCnpj, maskPhoneBR } from "@/lib/masks";
 import { useUIEvent } from "@/lib/ui-events";
+import { RequirePermission, Can } from "@/components/auth/RequirePermission";
+import { useSession } from "@/mocks/session";
+import { hasPermission } from "@/lib/permissions";
+
 
 export const Route = createFileRoute("/clientes")({
   head: () => ({
