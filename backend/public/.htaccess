@@ -1,0 +1,35 @@
+# SoulERP — reescrita de URL + headers de segurança básicos.
+# Compatível com Apache/LiteSpeed da Hostinger.
+
+Options -MultiViews -Indexes
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Se o arquivo/pasta existe fisicamente, serve normal (ex.: /favicon.ico).
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # Caso contrário, joga tudo para index.php.
+    RewriteRule ^ index.php [QSA,L]
+</IfModule>
+
+# Nunca listar diretórios.
+<IfModule mod_autoindex.c>
+    IndexIgnore *
+</IfModule>
+
+# Bloquear acesso a arquivos sensíveis se por acaso caírem no público.
+<FilesMatch "(^\.|composer\.(json|lock)|\.env|config\.php)$">
+    Require all denied
+</FilesMatch>
+
+# Headers de segurança padrão.
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "DENY"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+    # CORS é resolvido dinamicamente no PHP (allowlist), não aqui.
+</IfModule>
