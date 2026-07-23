@@ -47,10 +47,12 @@ export const customerFormSchema = z.object({
     .max(150, "Máximo de 150 caracteres"),
   tradeName: z.string().trim().max(150).optional().or(z.literal("")),
 
+  // Opcional; se preenchido, valida CPF/CNPJ.
   document: z
     .string()
-    .min(1, "Informe o CPF ou CNPJ")
-    .refine((v) => isValidCpfCnpj(v), "CPF/CNPJ inválido"),
+    .optional()
+    .or(z.literal(""))
+    .refine((v) => !v || isValidCpfCnpj(v), "CPF/CNPJ inválido"),
 
   phone: z
     .string()
@@ -72,29 +74,43 @@ export const customerFormSchema = z.object({
     cep: z
       .string()
       .optional()
+      .or(z.literal(""))
       .refine((v) => !v || onlyDigits(v).length === 8, "CEP inválido"),
-    street: z.string().trim().max(150).optional().or(z.literal("")),
+    // Único campo de endereço obrigatório — atende à regra "Endereço obrigatório".
+    street: z
+      .string()
+      .trim()
+      .min(2, "Informe o endereço")
+      .max(150, "Máximo de 150 caracteres"),
     number: z.string().trim().max(20).optional().or(z.literal("")),
     complement: z.string().trim().max(80).optional().or(z.literal("")),
     district: z.string().trim().max(80).optional().or(z.literal("")),
     city: z.string().trim().max(80).optional().or(z.literal("")),
-    state: z.enum(UF_LIST).optional().or(z.literal("")),
+    state: z
+      .union([z.enum(UF_LIST), z.literal("")])
+      .optional(),
   }),
 
   commercial: z.object({
     salespersonId: z.string().optional().or(z.literal("")),
-    priceTable: z.enum(["atacado", "varejo", "vip", "diamante"]),
-    creditLimit: z.number().min(0, "Valor inválido"),
-    paymentTerm: z.enum([
-      "a_vista",
-      "7_dias",
-      "14_dias",
-      "21_28",
-      "30_dias",
-      "30_60",
-      "30_60_90",
-      "faturado",
-    ]),
+    priceTable: z
+      .enum(["atacado", "varejo", "vip", "diamante"])
+      .optional()
+      .or(z.literal("")),
+    creditLimit: z.number().min(0, "Valor inválido").optional(),
+    paymentTerm: z
+      .enum([
+        "a_vista",
+        "7_dias",
+        "14_dias",
+        "21_28",
+        "30_dias",
+        "30_60",
+        "30_60_90",
+        "faturado",
+      ])
+      .optional()
+      .or(z.literal("")),
     notes: z.string().trim().max(1000).optional().or(z.literal("")),
   }),
 
