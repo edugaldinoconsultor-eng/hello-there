@@ -150,7 +150,7 @@ export function NovoClienteModal({
    * Já validado antes de disparar (evita chamadas desnecessárias).
    */
   const handleLookupCNPJ = async () => {
-    const d = onlyDigits(documentValue);
+    const d = onlyDigits(documentValue ?? "");
     if (d.length !== 14) {
       toast.warning("Informe um CNPJ completo para consultar.");
       return;
@@ -187,12 +187,12 @@ export function NovoClienteModal({
       personType: values.personType,
       legalName: values.legalName.trim(),
       tradeName: values.tradeName || undefined,
-      document: onlyDigits(values.document),
+      document: values.document ? onlyDigits(values.document) : undefined,
       phone: onlyDigits(values.phone),
       email: values.email || undefined,
       address: {
         cep: values.address.cep ? onlyDigits(values.address.cep) : undefined,
-        street: values.address.street || undefined,
+        street: values.address.street,
         number: values.address.number || undefined,
         complement: values.address.complement || undefined,
         district: values.address.district || undefined,
@@ -202,9 +202,9 @@ export function NovoClienteModal({
       commercial: {
         salespersonId: values.commercial.salespersonId || undefined,
         salespersonName: sp?.name,
-        priceTable: values.commercial.priceTable,
-        creditLimit: values.commercial.creditLimit,
-        paymentTerm: values.commercial.paymentTerm,
+        priceTable: values.commercial.priceTable || undefined,
+        creditLimit: values.commercial.creditLimit ?? undefined,
+        paymentTerm: values.commercial.paymentTerm || undefined,
         notes: values.commercial.notes || undefined,
       },
       status: values.status,
