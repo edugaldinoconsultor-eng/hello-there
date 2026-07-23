@@ -20,7 +20,9 @@ export function emitUIEvent(name: UIEventName) {
 export function onUIEvent(name: UIEventName, handler: Handler) {
   if (!listeners.has(name)) listeners.set(name, new Set());
   listeners.get(name)!.add(handler);
-  return () => listeners.get(name)!.delete(handler);
+  return () => {
+    listeners.get(name)?.delete(handler);
+  };
 }
 
 export function useUIEvent(name: UIEventName, handler: Handler) {
