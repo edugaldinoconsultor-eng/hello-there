@@ -20,6 +20,10 @@ import {
   type Order, type OrderStatus,
 } from "@/lib/order-types";
 import { useUIEvent } from "@/lib/ui-events";
+import { RequirePermission, Can } from "@/components/auth/RequirePermission";
+import { useSession } from "@/mocks/session";
+import { assertPermission, canAccessOrder, canCancelOrder, hasPermission } from "@/lib/permissions";
+
 
 export const Route = createFileRoute("/pedidos")({
   head: () => ({
