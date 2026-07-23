@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { DollarSign } from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { RequirePermission } from "@/components/auth/RequirePermission";
+
 
 export const Route = createFileRoute("/financeiro")({
   head: () => ({
