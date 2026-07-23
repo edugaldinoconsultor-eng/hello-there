@@ -31,7 +31,7 @@ import {
   type RecentOrder,
 } from "@/mocks/home";
 import { useSession } from "@/mocks/session";
-import { RequirePermission } from "@/components/auth/RequirePermission";
+
 
 
 export const Route = createFileRoute("/")({
