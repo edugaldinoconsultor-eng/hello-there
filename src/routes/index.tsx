@@ -74,6 +74,7 @@ const attentionMeta: Record<
 };
 
 function TodayPage() {
+  const { user } = useSession();
   const today = new Date().toLocaleDateString("pt-BR", {
     weekday: "long",
     day: "2-digit",
@@ -81,6 +82,7 @@ function TodayPage() {
     year: "numeric",
   });
   const capToday = today.charAt(0).toUpperCase() + today.slice(1);
+
 
   const columns: Column<RecentOrder>[] = [
     {
