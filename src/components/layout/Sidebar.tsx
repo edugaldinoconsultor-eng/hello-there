@@ -67,7 +67,7 @@ export function Sidebar({ open }: { open: boolean; onToggle: () => void }) {
           <Store className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
           {open && (
             <>
-              <span className="flex-1 truncate">{currentCompany.name}</span>
+              <span className="flex-1 truncate">{company.name}</span>
               <ChevronDown className="h-3 w-3 text-muted-foreground" />
             </>
           )}
@@ -109,10 +109,7 @@ export function Sidebar({ open }: { open: boolean; onToggle: () => void }) {
         })}
       </nav>
 
-      {/* Dev switcher */}
-      <div className="border-t border-sidebar-border px-2 pt-3">
-        <DevRoleSwitcher collapsed={!open} />
-      </div>
+      {/* Dev switcher removido — autenticação real via /auth/me */}
 
       {/* Settings + user */}
       <div className="border-t border-sidebar-border px-2 py-3">
