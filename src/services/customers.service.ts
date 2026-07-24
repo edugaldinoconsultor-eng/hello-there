@@ -280,10 +280,21 @@ export const customersService = {
 
 // ---------- Hook reativo consumido pela UI ----------
 
+export type LoadErrorInfo = {
+  message: string;
+  status?: number;
+  code?: string;
+  url?: string;
+  method?: string;
+  withCredentials?: boolean;
+  rawBody?: string;
+};
+
 export type UseCustomersState = {
   customers: Customer[];
   loading: boolean;
   error: string | null;
+  errorInfo: LoadErrorInfo | null;
   refresh: () => Promise<void>;
   createCustomer: (input: NewCustomerInput) => Promise<Customer>;
 };
@@ -292,23 +303,39 @@ export function useCustomers(): UseCustomersState {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [errorInfo, setErrorInfo] = useState<LoadErrorInfo | null>(null);
   const mounted = useRef(true);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
+    setErrorInfo(null);
     try {
       const rows = await customersService.list();
       if (mounted.current) setCustomers(rows);
     } catch (err) {
       if (!mounted.current) return;
-      const msg =
-        err instanceof ApiError ? err.message : (err as Error).message ?? "Erro ao carregar clientes.";
-      setError(msg);
+      if (err instanceof ApiError) {
+        setError(err.message);
+        setErrorInfo({
+          message: err.message,
+          status: err.status,
+          code: err.code,
+          url: err.url,
+          method: err.method,
+          withCredentials: err.withCredentials,
+          rawBody: err.rawBody,
+        });
+      } else {
+        const msg = (err as Error).message ?? "Erro ao carregar clientes.";
+        setError(msg);
+        setErrorInfo({ message: msg });
+      }
     } finally {
       if (mounted.current) setLoading(false);
     }
   }, []);
+
 
   useEffect(() => {
     mounted.current = true;
@@ -329,5 +356,5 @@ export function useCustomers(): UseCustomersState {
     [load],
   );
 
-  return { customers, loading, error, refresh: load, createCustomer };
+  return { customers, loading, error, errorInfo, refresh: load, createCustomer };
 }

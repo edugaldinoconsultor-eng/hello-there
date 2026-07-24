@@ -27,7 +27,7 @@ export const Route = createFileRoute("/clientes")({
 });
 
 function ClientesPage() {
-  const { customers, loading, error, refresh } = useCustomers();
+  const { customers, loading, error, errorInfo, refresh } = useCustomers();
   const [open, setOpen] = useState(false);
 
   // Header dispara "customer:new" — a página é a dona do modal.
@@ -110,13 +110,33 @@ function ClientesPage() {
             Carregando clientes…
           </section>
         ) : error ? (
-          <section className="rounded-lg border border-destructive/40 bg-destructive/10 p-6 text-center">
+          <section className="rounded-lg border border-destructive/40 bg-destructive/10 p-6">
             <p className="text-sm font-medium text-destructive">Não foi possível carregar os clientes.</p>
-            <p className="mt-1 text-[11px] text-muted-foreground">{error}</p>
+            <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+              <dt className="font-semibold text-foreground">Status HTTP</dt>
+              <dd>{errorInfo?.status ?? "—"}</dd>
+              <dt className="font-semibold text-foreground">URL</dt>
+              <dd className="break-all">{errorInfo?.url ?? "—"}</dd>
+              <dt className="font-semibold text-foreground">Método</dt>
+              <dd>{errorInfo?.method ?? "GET"}</dd>
+              <dt className="font-semibold text-foreground">credentials</dt>
+              <dd>{errorInfo?.withCredentials ? 'include' : 'omit'}</dd>
+              <dt className="font-semibold text-foreground">error.code</dt>
+              <dd>{errorInfo?.code ?? "—"}</dd>
+              <dt className="font-semibold text-foreground">error.message</dt>
+              <dd className="break-words">{errorInfo?.message ?? error}</dd>
+            </dl>
+            <div className="mt-3">
+              <p className="text-[11px] font-semibold text-foreground">Body cru retornado pela API:</p>
+              <pre className="mt-1 max-h-80 overflow-auto whitespace-pre-wrap break-all rounded border border-border bg-background p-2 text-[10px] leading-snug text-muted-foreground">
+{errorInfo?.rawBody ?? "(vazio)"}
+              </pre>
+            </div>
             <Button size="sm" variant="outline" className="mt-3" onClick={() => void refresh()}>
               Tentar novamente
             </Button>
           </section>
+
         ) : customers.length === 0 ? (
           <EmptyState
             icon={Users}
