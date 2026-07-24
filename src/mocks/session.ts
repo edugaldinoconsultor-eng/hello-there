@@ -1,14 +1,13 @@
-// MOCK — sessão e usuários para desenvolvimento.
+// Sessão do SoulERP.
 //
-// Arquitetura preparada para o modelo definitivo:
-//   User × Company × Role (CompanyUser)
-// Hoje: um mesmo usuário só está numa empresa; a `role` já vive na relação
-// (`SessionUser.role`) e não no perfil global — quando existir o modelo
-// multiempresa por usuário, o switcher escolherá a linha CompanyUser
-// correta em vez de mudar o usuário.
+// Após a integração com o backend real (Hostinger), a sessão é hidratada
+// via `GET /auth/me` e mantida em memória. Nada é gravado em localStorage
+// (o cookie `soulerp_sid` é HttpOnly e vive só no navegador).
 //
-// Toda leitura de domínio SEMPRE escopa por `currentCompany.id`. Nunca
-// permita que um usuário acesse dados fora da empresa ativa.
+// Para preservar os mocks internos (products/orders/customers), mantemos
+// um `currentCompany` fixo com o id mock; a empresa REAL da sessão vive em
+// `activeCompany` e é usada pelo Sidebar/Header para exibição e pelo
+// endpoint de switch-company.
 
 import { useEffect, useSyncExternalStore } from "react";
 
@@ -45,84 +44,147 @@ export type SessionUser = {
   active: boolean;
 };
 
+// ---------- empresa "mock" (mantém products/orders/customers funcionando) ----------
 export const currentCompany: Company = {
   id: "co_soul_001",
   name: "Distribuidora Soul",
   slug: "distribuidora-soul",
 };
 
-// --- usuários mock, um por perfil, todos escopados na mesma empresa ---
-export const MOCK_USERS: SessionUser[] = [
-  { id: "usr_owner",   name: "Eduardo Oliveira", initials: "EO", email: "eduardo@soul.com",  role: "owner",   companyId: currentCompany.id, active: true },
-  { id: "usr_admin",   name: "Ricardo Mendes",   initials: "RM", email: "ricardo@soul.com",  role: "admin",   companyId: currentCompany.id, active: true },
-  { id: "usr_manager", name: "Camila Duarte",    initials: "CD", email: "camila@soul.com",   role: "manager", companyId: currentCompany.id, active: true },
-  { id: "usr_seller",  name: "Bruno Freitas",    initials: "BF", email: "bruno@soul.com",    role: "seller",  companyId: currentCompany.id, active: true },
-  { id: "usr_finance", name: "Larissa Prado",    initials: "LP", email: "larissa@soul.com",  role: "finance", companyId: currentCompany.id, active: true },
-  { id: "usr_stock",   name: "Marcos Almeida",   initials: "MA", email: "marcos@soul.com",   role: "stock",   companyId: currentCompany.id, active: true },
-];
+// ---------- usuário "mock" default (só antes do bootstrap /me) ----------
+const DEFAULT_USER: SessionUser = {
+  id: "usr_local",
+  name: "Convidado",
+  initials: "SO",
+  email: "",
+  role: "admin",
+  companyId: currentCompany.id,
+  active: true,
+};
 
-const STORAGE_KEY = "soulerp.dev.currentUserId";
+export const currentUser: SessionUser = { ...DEFAULT_USER };
 
-function readInitialUserId(): string {
-  if (typeof window === "undefined") return "usr_admin";
-  try {
-    const saved = window.localStorage.getItem(STORAGE_KEY);
-    if (saved && MOCK_USERS.some((u) => u.id === saved)) return saved;
-  } catch {
-    /* ignore */
-  }
-  return "usr_admin";
-}
+// ---------- estado reativo ----------
+export type AuthStatus = "loading" | "authenticated" | "unauthenticated";
 
-let _currentUserId = "usr_admin";
+type AuthState = {
+  status: AuthStatus;
+  user: SessionUser;
+  activeCompany: Company;
+  companies: Company[];
+};
+
+const state: AuthState = {
+  status: "loading",
+  user: currentUser,
+  activeCompany: { ...currentCompany },
+  companies: [],
+};
+
 const subs = new Set<() => void>();
 const notify = () => subs.forEach((f) => f());
 
-// Objeto mutável exportado para consumidores não-reativos (ex.: mocks/orders).
-// Componentes React devem usar `useSession()` para reagir a mudanças.
-export const currentUser: SessionUser = { ...MOCK_USERS.find((u) => u.id === _currentUserId)! };
+function initialsFromName(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "SO";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
 
-function applyUser(id: string) {
-  const u = MOCK_USERS.find((x) => x.id === id);
-  if (!u) return;
-  _currentUserId = u.id;
-  Object.assign(currentUser, u);
-  if (typeof window !== "undefined") {
-    try {
-      window.localStorage.setItem(STORAGE_KEY, u.id);
-    } catch {
-      /* ignore */
-    }
+function normalizeRole(role: unknown): Role {
+  const r = String(role ?? "").toLowerCase();
+  if (r === "owner" || r === "admin" || r === "manager" || r === "seller" || r === "finance" || r === "stock") {
+    return r;
   }
+  // Compatibilidade com nomes alternativos que o backend possa emitir.
+  if (r === "representative") return "seller";
+  if (r === "inventory" || r === "estoque") return "stock";
+  if (r === "financeiro") return "finance";
+  return "seller";
+}
+
+export type ApiSessionPayload = {
+  user: { id: string | number; name: string; email: string; role: string; active?: boolean };
+  company: { id: string | number; name: string; slug?: string };
+  companies?: Array<{ id: string | number; name: string; slug?: string; role?: string }>;
+};
+
+export function applyApiSession(payload: ApiSessionPayload) {
+  const role = normalizeRole(payload.user.role);
+  const uid = String(payload.user.id);
+  const cid = String(payload.company.id);
+
+  Object.assign(currentUser, {
+    id: uid,
+    name: payload.user.name,
+    email: payload.user.email,
+    initials: initialsFromName(payload.user.name),
+    role,
+    // Mantemos companyId no id mock para preservar mocks internos.
+    companyId: currentCompany.id,
+    active: payload.user.active ?? true,
+  } as SessionUser);
+
+  state.status = "authenticated";
+  state.user = currentUser;
+  state.activeCompany = {
+    id: cid,
+    name: payload.company.name,
+    slug: payload.company.slug ?? String(payload.company.name).toLowerCase().replace(/\s+/g, "-"),
+  };
+  state.companies = (payload.companies ?? []).map((c) => ({
+    id: String(c.id),
+    name: c.name,
+    slug: c.slug ?? String(c.name).toLowerCase().replace(/\s+/g, "-"),
+  }));
   notify();
 }
 
-export function getCurrentUser(): SessionUser {
-  return currentUser;
+export function clearApiSession() {
+  Object.assign(currentUser, DEFAULT_USER);
+  state.status = "unauthenticated";
+  state.user = currentUser;
+  state.activeCompany = { ...currentCompany };
+  state.companies = [];
+  notify();
 }
 
-export function setCurrentUserId(id: string) {
-  applyUser(id);
+export function markAuthLoading() {
+  state.status = "loading";
+  notify();
 }
 
-/** Hook reativo. Todo componente que decide por perfil deve usar isto. */
+export function getAuthStatus(): AuthStatus {
+  return state.status;
+}
+
+function subscribe(cb: () => void) {
+  subs.add(cb);
+  return () => { subs.delete(cb); };
+}
+
+/** Hook reativo — devolve user + empresa ativa exibida na UI. */
 export function useSession(): { user: SessionUser; company: Company } {
-  // Hidrata a partir do localStorage no cliente (evita mismatch no SSR).
+  const snap = useSyncExternalStore(subscribe, () => state, () => state);
+  return { user: snap.user, company: snap.activeCompany };
+}
+
+export function useAuthStatus(): AuthStatus {
+  return useSyncExternalStore(subscribe, () => state.status, () => state.status);
+}
+
+export function useAuthCompanies(): Company[] {
+  return useSyncExternalStore(subscribe, () => state.companies, () => state.companies);
+}
+
+// ---------- shims legados (mantidos para não quebrar imports antigos) ----------
+export const MOCK_USERS: SessionUser[] = [];
+export function setCurrentUserId(_id: string): void { /* no-op: autenticação real */ }
+export function getCurrentUser(): SessionUser { return currentUser; }
+
+// Hidrata status inicial no cliente (sem SSR mismatch).
+export function useHydrateAuthStatus() {
   useEffect(() => {
-    const id = readInitialUserId();
-    if (id !== _currentUserId) applyUser(id);
+    // noop — a hidratação real é feita pelo AuthGate chamando /auth/me.
   }, []);
-
-  const user = useSyncExternalStore(
-    (cb) => {
-      subs.add(cb);
-      return () => {
-        subs.delete(cb);
-      };
-    },
-    () => currentUser,
-    () => currentUser,
-  );
-
-  return { user, company: currentCompany };
 }
