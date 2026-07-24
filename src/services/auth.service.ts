@@ -61,10 +61,15 @@ export const authService = {
 
   async login(email: string, password: string): Promise<void> {
     // Login não envia CSRF.
-    const payload = await apiFetch<ApiSessionPayload>("/auth/login", {
+    const payload = await apiFetch<ApiSessionPayload & { csrf_token?: string }>("/auth/login", {
       method: "POST",
       body: { email, password },
     });
+    // Cross-site: cookie `soulerp_csrf` é 3rd-party e invisível ao JS.
+    // Guardamos o token ecoado no corpo para usar no header X-CSRF-Token.
+    if (payload && typeof payload === "object" && typeof payload.csrf_token === "string") {
+      setCsrfToken(payload.csrf_token);
+    }
     applyApiSession(payload);
   },
 
@@ -72,19 +77,22 @@ export const authService = {
     try {
       await apiFetch<void>("/auth/logout", { method: "POST" });
     } catch (err) {
-      // Mesmo se falhar, limpamos o estado local.
       if (!(err instanceof ApiError) || err.status !== 401) {
         console.warn("logout falhou:", err);
       }
     }
+    setCsrfToken(null);
     clearApiSession();
   },
 
   async switchCompany(companyId: string | number): Promise<void> {
-    const payload = await apiFetch<ApiSessionPayload>("/auth/switch-company", {
+    const payload = await apiFetch<ApiSessionPayload & { csrf_token?: string }>("/auth/switch-company", {
       method: "POST",
       body: { companyId },
     });
+    if (payload && typeof payload === "object" && typeof payload.csrf_token === "string") {
+      setCsrfToken(payload.csrf_token);
+    }
     applyApiSession(payload);
   },
 };
