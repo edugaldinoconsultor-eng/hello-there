@@ -38,7 +38,7 @@ export const Route = createFileRoute("/pedidos")({
 });
 
 function PedidosPage() {
-  const { orders, updateStatus } = useOrders();
+  const { orders, loading, error, updateStatus, refresh } = useOrders();
   const { customers } = useCustomers();
 
   const { user } = useSession();
@@ -78,12 +78,16 @@ function PedidosPage() {
   const customerName = (id: string) =>
     customers.find((c) => c.id === id)?.legalName ?? "—";
 
-  const handleCancel = (o: Order) => {
-    // Validação real — não confiar só em esconder o botão.
+  const handleCancel = async (o: Order) => {
     assertPermission(user, "orders.cancel");
     if (!canCancelOrder(user, o)) return;
-    updateStatus(o.id, "cancelled");
+    try {
+      await updateStatus(o.id, "cancelled");
+    } catch {
+      // erro global já exibe toast via api-client / fluxo de sessão
+    }
   };
+
 
 
   const columns: Column<Order>[] = [
