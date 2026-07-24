@@ -13,9 +13,9 @@ import {
   Store,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useSession, currentCompany, ROLE_LABEL } from "@/mocks/session";
+import { useSession, ROLE_LABEL } from "@/mocks/session";
 import { canAccessRoute } from "@/lib/permissions";
-import { DevRoleSwitcher } from "@/components/auth/DevRoleSwitcher";
+import { authService } from "@/services/auth.service";
 
 type NavItem = {
   label: string;
@@ -36,7 +36,7 @@ const nav: NavItem[] = [
 
 export function Sidebar({ open }: { open: boolean; onToggle: () => void }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const { user } = useSession();
+  const { user, company } = useSession();
 
   const visibleNav = nav.filter((item) => canAccessRoute(user, item.to));
   const canSettings = canAccessRoute(user, "/configuracoes");
