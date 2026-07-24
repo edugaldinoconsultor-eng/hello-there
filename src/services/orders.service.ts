@@ -78,7 +78,7 @@ type ApiCreateBody = {
   expected_delivery_date?: string;
   discount: string;
   freight: string;
-  payment_condition?: PaymentCondition;
+  payment_condition?: string;
   notes?: string;
   installments?: ApiCreateInstallment[];
   delivery?: ApiDelivery;
