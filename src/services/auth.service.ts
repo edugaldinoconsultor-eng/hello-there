@@ -13,11 +13,15 @@ import {
 } from "@/mocks/session";
 
 async function fetchMe(): Promise<ApiSessionPayload | null> {
+  const ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
+  const timer = ctrl ? setTimeout(() => ctrl.abort(), 8000) : null;
   try {
-    return await apiFetch<ApiSessionPayload>("/auth/me");
+    return await apiFetch<ApiSessionPayload>("/auth/me", { signal: ctrl?.signal });
   } catch (err) {
     if (err instanceof ApiError && err.status === 401) return null;
     throw err;
+  } finally {
+    if (timer) clearTimeout(timer);
   }
 }
 
