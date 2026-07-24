@@ -356,5 +356,5 @@ export function useCustomers(): UseCustomersState {
     [load],
   );
 
-  return { customers, loading, error, refresh: load, createCustomer };
+  return { customers, loading, error, errorInfo, refresh: load, createCustomer };
 }
