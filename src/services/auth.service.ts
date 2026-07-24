@@ -46,20 +46,29 @@ export const authService = {
     try {
       const me = await fetchMe();
       if (!me) {
+        setCsrfToken(null);
         clearApiSession();
         return false;
+      }
+      if (typeof me.csrf_token === "string") {
+        setCsrfToken(me.csrf_token);
       }
       applyApiSession(me);
       return true;
     } catch (err) {
       console.error("bootstrap /auth/me falhou:", err);
+      setCsrfToken(null);
       clearApiSession();
       return false;
     }
   },
 
-  async me(): Promise<ApiSessionPayload | null> {
-    return fetchMe();
+  async me(): Promise<MePayload | null> {
+    const me = await fetchMe();
+    if (me && typeof me.csrf_token === "string") {
+      setCsrfToken(me.csrf_token);
+    }
+    return me;
   },
 
   async login(email: string, password: string): Promise<void> {
