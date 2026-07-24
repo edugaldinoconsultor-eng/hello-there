@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AppShell } from "../components/layout/AppShell";
 import { AuthGate } from "../components/auth/AuthGate";
+import { Toaster } from "../components/ui/sonner";
 
 function NotFoundComponent() {
   return (
@@ -136,6 +137,7 @@ function RootComponent() {
           <Outlet />
         </AppShell>
       </AuthGate>
+      <Toaster />
     </QueryClientProvider>
   );
 }

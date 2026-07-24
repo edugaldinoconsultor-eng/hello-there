@@ -51,22 +51,35 @@ export function setUnauthorizedHandler(h: UnauthorizedHandler | null) {
 
 const CSRF_COOKIE = "soulerp_csrf";
 
+// Fallback em memória: quando frontend e API estão em domínios diferentes
+// (lovable.app ↔ infodanutri.com.br), o cookie `soulerp_csrf` é 3rd-party e
+// NÃO é visível via `document.cookie`. O backend ecoa `csrf_token` no corpo
+// de /auth/login e /auth/switch-company; guardamos aqui e enviamos no header.
+let inMemoryCsrf: string | null = null;
+export function setCsrfToken(token: string | null) {
+  inMemoryCsrf = token && token.length > 0 ? token : null;
+}
+export function getCsrfToken(): string | null {
+  return inMemoryCsrf;
+}
+
 export function readCsrfToken(): string | null {
-  if (typeof document === "undefined") return null;
-  const raw = document.cookie ? document.cookie.split("; ") : [];
-  for (const part of raw) {
-    const eq = part.indexOf("=");
-    if (eq === -1) continue;
-    const name = part.slice(0, eq);
-    if (name === CSRF_COOKIE) {
-      try {
-        return decodeURIComponent(part.slice(eq + 1));
-      } catch {
-        return part.slice(eq + 1);
+  if (typeof document !== "undefined") {
+    const raw = document.cookie ? document.cookie.split("; ") : [];
+    for (const part of raw) {
+      const eq = part.indexOf("=");
+      if (eq === -1) continue;
+      const name = part.slice(0, eq);
+      if (name === CSRF_COOKIE) {
+        try {
+          return decodeURIComponent(part.slice(eq + 1));
+        } catch {
+          return part.slice(eq + 1);
+        }
       }
     }
   }
-  return null;
+  return inMemoryCsrf;
 }
 
 function codeFromStatus(status: number): ApiErrorCode {
