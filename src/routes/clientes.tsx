@@ -27,7 +27,7 @@ export const Route = createFileRoute("/clientes")({
 });
 
 function ClientesPage() {
-  const { customers, loading, error, errorInfo, refresh } = useCustomers();
+  const { customers, loading, error, refresh } = useCustomers();
   const [open, setOpen] = useState(false);
 
   // Header dispara "customer:new" — a página é a dona do modal.
