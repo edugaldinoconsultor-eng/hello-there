@@ -39,6 +39,15 @@ export class ApiError extends Error {
   }
 }
 
+// ---------- Handler global de 401 ----------
+// O auth.service registra um callback aqui no boot para não criar
+// dependência circular (api-client → session).
+type UnauthorizedHandler = (ctx: { url: string; method: string }) => void;
+let unauthorizedHandler: UnauthorizedHandler | null = null;
+export function setUnauthorizedHandler(h: UnauthorizedHandler | null) {
+  unauthorizedHandler = h;
+}
+
 
 const CSRF_COOKIE = "soulerp_csrf";
 
@@ -138,17 +147,19 @@ export async function apiFetch<T = unknown>(
     };
     const code = (p.error?.code as ApiErrorCode) ?? codeFromStatus(response.status);
     const message = p.error?.message ?? p.message ?? `HTTP ${response.status}`;
-    // eslint-disable-next-line no-console
-    console.warn(`[api-client] ${method} ${path} → ${response.status}`, payload);
     const apiErr = new ApiError(response.status, code, message, p.error?.details);
     apiErr.url = url;
     apiErr.method = method;
     apiErr.withCredentials = true;
     apiErr.rawBody = text;
+
+    // 401 global: derruba a sessão local antes de propagar o erro.
+    // Não dispara para o próprio /auth/login (esperado quando credencial errada).
+    if (response.status === 401 && unauthorizedHandler && !path.startsWith("/auth/login")) {
+      try { unauthorizedHandler({ url, method }); } catch { /* noop */ }
+    }
     throw apiErr;
   }
-
-
 
   // API pode retornar { data: T } ou T diretamente.
   if (payload && typeof payload === "object" && "data" in (payload as Record<string, unknown>)) {
