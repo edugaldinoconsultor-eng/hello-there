@@ -13,9 +13,9 @@ import {
   Store,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useSession, currentCompany, ROLE_LABEL } from "@/mocks/session";
+import { useSession, ROLE_LABEL } from "@/mocks/session";
 import { canAccessRoute } from "@/lib/permissions";
-import { DevRoleSwitcher } from "@/components/auth/DevRoleSwitcher";
+import { authService } from "@/services/auth.service";
 
 type NavItem = {
   label: string;
@@ -36,7 +36,7 @@ const nav: NavItem[] = [
 
 export function Sidebar({ open }: { open: boolean; onToggle: () => void }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const { user } = useSession();
+  const { user, company } = useSession();
 
   const visibleNav = nav.filter((item) => canAccessRoute(user, item.to));
   const canSettings = canAccessRoute(user, "/configuracoes");
@@ -67,7 +67,7 @@ export function Sidebar({ open }: { open: boolean; onToggle: () => void }) {
           <Store className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
           {open && (
             <>
-              <span className="flex-1 truncate">{currentCompany.name}</span>
+              <span className="flex-1 truncate">{company.name}</span>
               <ChevronDown className="h-3 w-3 text-muted-foreground" />
             </>
           )}
@@ -109,10 +109,7 @@ export function Sidebar({ open }: { open: boolean; onToggle: () => void }) {
         })}
       </nav>
 
-      {/* Dev switcher */}
-      <div className="border-t border-sidebar-border px-2 pt-3">
-        <DevRoleSwitcher collapsed={!open} />
-      </div>
+      {/* Dev switcher removido — autenticação real via /auth/me */}
 
       {/* Settings + user */}
       <div className="border-t border-sidebar-border px-2 py-3">
@@ -151,6 +148,7 @@ export function Sidebar({ open }: { open: boolean; onToggle: () => void }) {
         </div>
 
         <button
+          onClick={() => { void authService.logout(); }}
           className={cn(
             "mt-1 flex w-full items-center gap-3 rounded-md px-2 py-2 text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent/60",
             !open && "justify-center",

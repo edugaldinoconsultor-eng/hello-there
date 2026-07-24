@@ -1,34 +1,70 @@
 /**
- * Service de Autenticação — fachada da UI.
- *
- * Hoje: expõe a sessão mock (DevRoleSwitcher).
- * Futuro: `login()` chamará POST /auth/login no backend Hostinger, receberá
- * um token (JWT ou cookie httpOnly) e o restante da app permanece igual.
+ * Service de Autenticação — agora chamando o backend real.
+ * Base: https://api.infodanutri.com.br/api/v1
  */
+import { apiFetch, ApiError } from "./api-client";
 import {
-  currentCompany,
-  getCurrentUser,
-  setCurrentUserId,
+  applyApiSession,
+  clearApiSession,
+  markAuthLoading,
   useSession,
+  type ApiSessionPayload,
   type SessionUser,
 } from "@/mocks/session";
 
+async function fetchMe(): Promise<ApiSessionPayload | null> {
+  try {
+    return await apiFetch<ApiSessionPayload>("/auth/me");
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 401) return null;
+    throw err;
+  }
+}
+
 export const authService = {
-  me(): Promise<{ user: SessionUser; company: typeof currentCompany }> {
-    return Promise.resolve({ user: getCurrentUser(), company: currentCompany });
+  /** Bootstrap: consulta /auth/me e hidrata a sessão. */
+  async bootstrap(): Promise<boolean> {
+    markAuthLoading();
+    const me = await fetchMe();
+    if (!me) {
+      clearApiSession();
+      return false;
+    }
+    applyApiSession(me);
+    return true;
   },
-  /** Placeholder — troca de perfil no modo dev. */
-  switchUser(userId: string): Promise<void> {
-    setCurrentUserId(userId);
-    return Promise.resolve();
+
+  async me(): Promise<ApiSessionPayload | null> {
+    return fetchMe();
   },
-  /** Futuro: POST /auth/login. */
-  login(_email: string, _password: string): Promise<never> {
-    throw new Error("Login real ainda não implementado.");
+
+  async login(email: string, password: string): Promise<void> {
+    // Login não envia CSRF.
+    const payload = await apiFetch<ApiSessionPayload>("/auth/login", {
+      method: "POST",
+      body: { email, password },
+    });
+    applyApiSession(payload);
   },
-  /** Futuro: POST /auth/logout. */
-  logout(): Promise<void> {
-    return Promise.resolve();
+
+  async logout(): Promise<void> {
+    try {
+      await apiFetch<void>("/auth/logout", { method: "POST" });
+    } catch (err) {
+      // Mesmo se falhar, limpamos o estado local.
+      if (!(err instanceof ApiError) || err.status !== 401) {
+        console.warn("logout falhou:", err);
+      }
+    }
+    clearApiSession();
+  },
+
+  async switchCompany(companyId: string | number): Promise<void> {
+    const payload = await apiFetch<ApiSessionPayload>("/auth/switch-company", {
+      method: "POST",
+      body: { companyId },
+    });
+    applyApiSession(payload);
   },
 };
 
