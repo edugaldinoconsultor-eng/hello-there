@@ -19,15 +19,18 @@ import {
 setUnauthorizedHandler(({ url, method }) => {
   if (getAuthStatus() !== "unauthenticated") {
     console.warn(`[auth] Sessão derrubada por 401 em ${method} ${url}`);
+    setCsrfToken(null);
     clearApiSession();
   }
 });
 
-async function fetchMe(): Promise<ApiSessionPayload | null> {
+type MePayload = ApiSessionPayload & { csrf_token?: string };
+
+async function fetchMe(): Promise<MePayload | null> {
   const ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
   const timer = ctrl ? setTimeout(() => ctrl.abort(), 8000) : null;
   try {
-    return await apiFetch<ApiSessionPayload>("/auth/me", { signal: ctrl?.signal });
+    return await apiFetch<MePayload>("/auth/me", { signal: ctrl?.signal });
   } catch (err) {
     if (err instanceof ApiError && err.status === 401) return null;
     throw err;
@@ -43,20 +46,29 @@ export const authService = {
     try {
       const me = await fetchMe();
       if (!me) {
+        setCsrfToken(null);
         clearApiSession();
         return false;
+      }
+      if (typeof me.csrf_token === "string") {
+        setCsrfToken(me.csrf_token);
       }
       applyApiSession(me);
       return true;
     } catch (err) {
       console.error("bootstrap /auth/me falhou:", err);
+      setCsrfToken(null);
       clearApiSession();
       return false;
     }
   },
 
-  async me(): Promise<ApiSessionPayload | null> {
-    return fetchMe();
+  async me(): Promise<MePayload | null> {
+    const me = await fetchMe();
+    if (me && typeof me.csrf_token === "string") {
+      setCsrfToken(me.csrf_token);
+    }
+    return me;
   },
 
   async login(email: string, password: string): Promise<void> {
