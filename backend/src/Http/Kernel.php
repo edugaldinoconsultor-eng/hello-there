@@ -3,16 +3,19 @@ declare(strict_types=1);
 
 namespace SoulERP\Http;
 
+use SoulERP\Auth\CsrfGuard;
 use SoulERP\Config\AppConfig;
 use SoulERP\Middleware\Cors;
 use Throwable;
 
 /**
- * Ponto de entrada do request. Chamado pelo public/index.php.
+ * Ponto de entrada do request.
  *
- * - Roda CORS antes de tudo (responde preflight OPTIONS na hora).
- * - Instancia o Router a partir de routes/api.php.
- * - Traduz qualquer exceção em resposta JSON no formato padrão.
+ * Ordem:
+ *   1. CORS (responde OPTIONS 204 sem tocar em nada mais).
+ *   2. CSRF em mutações (POST/PATCH/DELETE), exceto rotas isentas.
+ *   3. Dispatch para o Router. Controllers chamam Session::requireUser.
+ *   4. Exceções são serializadas no formato padrão de erro.
  */
 final class Kernel
 {
@@ -26,6 +29,8 @@ final class Kernel
                 Response::noContent();
                 return;
             }
+
+            CsrfGuard::enforce($request);
 
             /** @var callable(Router):void $bind */
             $bind = require __DIR__ . '/../../routes/api.php';
