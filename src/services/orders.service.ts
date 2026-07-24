@@ -77,27 +77,7 @@ type ApiCreateBody = {
   delivery?: ApiDelivery;
 };
 
-// Mapeia o SaleType visual do modal para o valor aceito pelo backend.
-// Backend hoje aceita "balcao" como venda padrão de balcão/retirada.
-function mapSaleType(v: SaleType): string {
-  switch (v) {
-    case "venda": return "balcao";
-    default: return v;
-  }
-}
-
-// Mapeia a condição de pagamento visual para o valor aceito pelo backend.
-// "a_vista" é normalizado para "30_dias" (compatibilidade com backend atual).
-function mapPaymentCondition(v: PaymentCondition): string {
-  switch (v) {
-    case "a_vista": return "30_dias";
-    default: return v;
-  }
-}
-
 function buildCreateBody(input: NewOrderInput): ApiCreateBody {
-  const isPickup = input.delivery?.method === "retirada";
-
   const body: ApiCreateBody = {
     customer_id: String(input.customerId),
     items: input.items.map((it: OrderItem) => ({
@@ -106,20 +86,17 @@ function buildCreateBody(input: NewOrderInput): ApiCreateBody {
       unit_price: money(it.unitPrice),
       discount: money(it.discount),
     })),
-    sale_type: mapSaleType(input.saleType),
+    // Nomes visuais do modal são mapeados literalmente pelo próprio modal
+    // antes de chamar `create()` — este service NÃO reinterpreta valores.
+    sale_type: input.saleType as string,
     order_date: input.orderDate,
     discount: money(input.discount),
     freight: money(input.delivery?.freeShipping ? 0 : input.freight),
-    payment_condition: mapPaymentCondition(input.payment.condition) as PaymentCondition,
+    payment_condition: input.payment.condition,
   };
-  // Retirada: não enviar expected_delivery_date nem delivery.
-  if (!isPickup && input.expectedDeliveryDate) {
-    body.expected_delivery_date = input.expectedDeliveryDate;
-  }
+  if (input.expectedDeliveryDate) body.expected_delivery_date = input.expectedDeliveryDate;
   if (input.notes) body.notes = input.notes;
 
-  // Parcelas: só envia quando o usuário definiu mais de uma no modal.
-  // Backend cria automaticamente 1 parcela à vista quando `installments` é vazio.
   if (input.installments && input.installments.length > 1) {
     body.installments = input.installments.map((p) => ({
       due_date: p.dueDate,
@@ -127,9 +104,9 @@ function buildCreateBody(input: NewOrderInput): ApiCreateBody {
     }));
   }
 
-  // Entrega: só envia payload quando não é retirada (evita snapshot vazio).
+  // Entrega: só envia payload quando o modal passar um delivery.
   const d = input.delivery;
-  if (d && !isPickup) {
+  if (d) {
     const addr = d.address;
     const snap = addr
       ? {
