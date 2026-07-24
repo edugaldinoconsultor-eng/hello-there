@@ -160,7 +160,19 @@ function PedidosPage() {
           </Can>
         </div>
 
-        {scoped.length === 0 ? (
+        {loading ? (
+          <div className="rounded-lg border border-border bg-card p-8 text-center text-sm text-muted-foreground">
+            Carregando pedidos…
+          </div>
+        ) : error ? (
+          <div className="space-y-2 rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
+            <div className="font-medium">Não foi possível carregar os pedidos.</div>
+            <div className="text-xs opacity-90">{error}</div>
+            <Button size="sm" variant="outline" onClick={() => void refresh()}>
+              Tentar novamente
+            </Button>
+          </div>
+        ) : scoped.length === 0 ? (
           <EmptyState
             icon={ShoppingCart}
             title="Nenhum pedido encontrado"
