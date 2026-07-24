@@ -2,15 +2,26 @@
  * Service de Autenticação — agora chamando o backend real.
  * Base: https://api.infodanutri.com.br/api/v1
  */
-import { apiFetch, ApiError } from "./api-client";
+import { apiFetch, ApiError, setUnauthorizedHandler } from "./api-client";
 import {
   applyApiSession,
   clearApiSession,
   markAuthLoading,
+  getAuthStatus,
   useSession,
   type ApiSessionPayload,
   type SessionUser,
 } from "@/mocks/session";
+
+// Registra tratamento GLOBAL de 401: qualquer chamada autenticada que
+// retornar UNAUTHORIZED derruba a sessão local imediatamente, forçando
+// o AuthGate a exibir a LoginScreen.
+setUnauthorizedHandler(({ url, method }) => {
+  if (getAuthStatus() !== "unauthenticated") {
+    console.warn(`[auth] Sessão derrubada por 401 em ${method} ${url}`);
+    clearApiSession();
+  }
+});
 
 async function fetchMe(): Promise<ApiSessionPayload | null> {
   const ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
