@@ -82,7 +82,7 @@ export async function apiFetch<T = unknown>(
     ...(opts.headers ?? {}),
   };
 
-  const isUnsafe = method !== "GET" && method !== "HEAD";
+  const isUnsafe = method !== "GET";
   const needsCsrf = opts.csrf ?? isUnsafe;
   if (needsCsrf) {
     const token = readCsrfToken();
