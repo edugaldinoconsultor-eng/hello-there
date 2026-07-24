@@ -2,6 +2,11 @@
 --
 -- Executar MANUALMENTE no phpMyAdmin da Hostinger, na base do SoulERP.
 -- Não roda automaticamente. Segura para rodar múltiplas vezes (IF NOT EXISTS).
+--
+-- IMPORTANTE: users.id e companies.id no banco real são BIGINT UNSIGNED
+-- AUTO_INCREMENT. As FKs abaixo precisam do MESMO tipo, senão o MySQL
+-- rejeita com erro 1005 / errno 150 ("Foreign key constraint is
+-- incorrectly formed").
 
 SET NAMES utf8mb4;
 
@@ -11,8 +16,8 @@ SET NAMES utf8mb4;
 -- reconstruir cookies válidos.
 CREATE TABLE IF NOT EXISTS auth_sessions (
     id           CHAR(36) PRIMARY KEY,
-    user_id      CHAR(36) NOT NULL,
-    company_id   CHAR(36) NOT NULL,
+    user_id      BIGINT UNSIGNED NOT NULL,
+    company_id   BIGINT UNSIGNED NOT NULL,
     token_hash   CHAR(64) NOT NULL,
     expires_at   TIMESTAMP NOT NULL,
     last_used_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,

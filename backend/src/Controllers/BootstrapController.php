@@ -64,40 +64,45 @@ final class BootstrapController
             throw new HttpException(422, 'VALIDATION_ERROR', 'Email inválido.');
         }
 
-        $companyId = Uuid::v4();
-        $userId    = Uuid::v4();
-        $cuId      = Uuid::v4();
-        $hash      = PasswordHasher::hash($password);
+        $hash = PasswordHasher::hash($password);
+
+        // IMPORTANTE: users.id, companies.id e company_users.id no banco real
+        // são BIGINT UNSIGNED AUTO_INCREMENT. NÃO passamos :id — deixamos o
+        // MySQL gerar e recuperamos com lastInsertId(). Mesma coisa para
+        // audit_logs (id BIGINT AUTO_INCREMENT).
+        $companyId = '';
+        $userId    = '';
 
         try {
             Connection::beginTransaction();
 
             $s = $pdo->prepare(
-                'INSERT INTO companies (id, name, active, created_at, updated_at)
-                 VALUES (:id, :n, 1, NOW(), NOW())'
+                'INSERT INTO companies (name, active, created_at, updated_at)
+                 VALUES (:n, 1, NOW(), NOW())'
             );
-            $s->execute([':id' => $companyId, ':n' => $companyName]);
+            $s->execute([':n' => $companyName]);
+            $companyId = (string) $pdo->lastInsertId();
 
             $s = $pdo->prepare(
-                'INSERT INTO users (id, name, email, password_hash, active, created_at, updated_at)
-                 VALUES (:id, :n, :e, :h, 1, NOW(), NOW())'
+                'INSERT INTO users (name, email, password_hash, active, created_at, updated_at)
+                 VALUES (:n, :e, :h, 1, NOW(), NOW())'
             );
-            $s->execute([':id' => $userId, ':n' => $userName, ':e' => $email, ':h' => $hash]);
+            $s->execute([':n' => $userName, ':e' => $email, ':h' => $hash]);
+            $userId = (string) $pdo->lastInsertId();
 
             $s = $pdo->prepare(
-                "INSERT INTO company_users (id, company_id, user_id, role, active, created_at)
-                 VALUES (:id, :c, :u, 'owner', 1, NOW())"
+                "INSERT INTO company_users (company_id, user_id, role, active, created_at)
+                 VALUES (:c, :u, 'owner', 1, NOW())"
             );
-            $s->execute([':id' => $cuId, ':c' => $companyId, ':u' => $userId]);
+            $s->execute([':c' => $companyId, ':u' => $userId]);
 
             // Audit direto (sem AuthenticatedUser real — usa o próprio owner criado).
             $s = $pdo->prepare(
                 'INSERT INTO audit_logs
-                    (id, company_id, user_id, action, entity_type, entity_id, diff, ip, user_agent, created_at)
-                 VALUES (:id, :c, :u, :a, :et, :eid, :d, :ip, :ua, NOW())'
+                    (company_id, user_id, action, entity_type, entity_id, diff, ip, user_agent, created_at)
+                 VALUES (:c, :u, :a, :et, :eid, :d, :ip, :ua, NOW())'
             );
             $s->execute([
-                ':id'  => Uuid::v4(),
                 ':c'   => $companyId,
                 ':u'   => $userId,
                 ':a'   => 'BOOTSTRAP',
@@ -114,6 +119,7 @@ final class BootstrapController
             error_log('[SoulERP] Bootstrap failed: ' . $e->getMessage());
             throw new HttpException(500, 'INTERNAL_ERROR', 'Falha ao executar bootstrap.');
         }
+
 
         Response::json([
             'company' => ['id' => $companyId, 'name' => $companyName],
