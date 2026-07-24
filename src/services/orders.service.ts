@@ -28,8 +28,15 @@ export type { Order, OrderStatus };
 
 export type NewOrderInput = Omit<
   Order,
-  "id" | "orderNumber" | "companyId" | "createdAt" | "updatedAt"
->;
+  "id" | "orderNumber" | "companyId" | "createdAt" | "updatedAt" | "delivery" | "expectedDeliveryDate" | "saleType" | "payment"
+> & {
+  // Campos que o modal remapeia livremente antes do POST — tipagem afrouxada
+  // aqui para permitir valores específicos do backend ("balcao", "30_dias", …).
+  saleType: string;
+  payment: { condition: string; installmentsCount: number };
+  delivery?: Order["delivery"];
+  expectedDeliveryDate?: string;
+};
 
 // -------------------- helpers monetários --------------------
 
