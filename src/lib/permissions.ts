@@ -45,6 +45,7 @@ export const PERMISSIONS = [
 
   // produtos
   "products.view",
+  "products.create",
   "products.edit",
   "products.price.edit",
 
