@@ -89,15 +89,14 @@ type ApiCustomerRow = {
   company_id?: string | number;
   name: string;
   fantasy_name?: string | null;
-  person_type?: string | null;
   document?: string | null;
   phone: string;
   email?: string | null;
-  address_cep?: string | null;
+  address_zip_code?: string | null;
   address_street?: string | null;
   address_number?: string | null;
   address_complement?: string | null;
-  address_district?: string | null;
+  address_neighborhood?: string | null;
   address_city?: string | null;
   address_state?: string | null;
   seller_id?: string | number | null;
@@ -123,8 +122,10 @@ function n(v: unknown): number | undefined {
 }
 
 function fromApi(row: ApiCustomerRow): Customer {
-  const personType: PersonType =
-    row.person_type === "PF" || row.person_type === "PJ" ? row.person_type : "PJ";
+  // person_type NÃO existe no banco real — inferido só localmente pelo documento.
+  const doc = s(row.document) ?? "";
+  const digits = doc.replace(/\D/g, "");
+  const personType: PersonType = digits.length === 14 ? "PJ" : "PF";
   return {
     id: String(row.id),
     companyId: row.company_id !== undefined ? String(row.company_id) : "",
@@ -137,11 +138,11 @@ function fromApi(row: ApiCustomerRow): Customer {
     phone: row.phone ?? "",
     email: s(row.email),
     address: {
-      cep: s(row.address_cep),
+      cep: s(row.address_zip_code),
       street: s(row.address_street),
       number: s(row.address_number),
       complement: s(row.address_complement),
-      district: s(row.address_district),
+      district: s(row.address_neighborhood),
       city: s(row.address_city),
       state: s(row.address_state),
     },
@@ -165,13 +166,12 @@ type ApiCreateBody = {
   phone: string;
   address_street: string;
   fantasy_name?: string;
-  person_type?: PersonType;
   document?: string;
   email?: string;
-  address_cep?: string;
+  address_zip_code?: string;
   address_number?: string;
   address_complement?: string;
-  address_district?: string;
+  address_neighborhood?: string;
   address_city?: string;
   address_state?: string;
   seller_id?: string;
@@ -188,15 +188,15 @@ function toApiCreate(input: NewCustomerInput): ApiCreateBody {
     name: input.legalName,
     phone: input.phone,
     address_street: addr.street ?? "",
-    person_type: input.personType,
   };
+  // person_type NÃO existe no banco — não enviar.
   if (input.tradeName) body.fantasy_name = input.tradeName;
   if (input.document) body.document = input.document;
   if (input.email) body.email = input.email;
-  if (addr.cep) body.address_cep = addr.cep;
+  if (addr.cep) body.address_zip_code = addr.cep;
   if (addr.number) body.address_number = addr.number;
   if (addr.complement) body.address_complement = addr.complement;
-  if (addr.district) body.address_district = addr.district;
+  if (addr.district) body.address_neighborhood = addr.district;
   if (addr.city) body.address_city = addr.city;
   if (addr.state) body.address_state = addr.state;
   if (com.salespersonId) body.seller_id = com.salespersonId;
