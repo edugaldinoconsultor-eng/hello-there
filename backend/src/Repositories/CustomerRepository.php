@@ -4,11 +4,20 @@ declare(strict_types=1);
 namespace SoulERP\Repositories;
 
 use SoulERP\Database\Connection;
-use SoulERP\Support\Uuid;
 
 /**
  * Acesso a customers, sempre escopado por company_id.
  * NUNCA aceite company_id de fora — sempre venha da sessão autenticada.
+ *
+ * Colunas reais no MySQL da Hostinger:
+ *   id (BIGINT UNSIGNED AUTO_INCREMENT), company_id, name, fantasy_name,
+ *   document, phone, email,
+ *   address_street, address_number, address_complement,
+ *   address_neighborhood, address_city, address_state, address_zip_code,
+ *   seller_id, price_table, credit_limit, payment_term, notes,
+ *   active, created_at, updated_at
+ *
+ * NÃO existem no banco: person_type, address_cep, address_district.
  */
 final class CustomerRepository
 {
@@ -43,43 +52,41 @@ final class CustomerRepository
     /** @param array<string,mixed> $data */
     public function create(string $companyId, array $data): string
     {
-        $id = Uuid::v4();
-        $stmt = Connection::pdo()->prepare(
+        $pdo = Connection::pdo();
+        $stmt = $pdo->prepare(
             'INSERT INTO customers
-             (id, company_id, name, fantasy_name, person_type, document, phone, email,
-              address_cep, address_street, address_number, address_complement,
-              address_district, address_city, address_state,
+             (company_id, name, fantasy_name, document, phone, email,
+              address_street, address_number, address_complement,
+              address_neighborhood, address_city, address_state, address_zip_code,
               seller_id, price_table, credit_limit, payment_term, notes, active,
               created_at, updated_at)
              VALUES
-             (:id, :cid, :name, :fantasy, :ptype, :doc, :phone, :email,
-              :cep, :street, :number, :complement,
-              :district, :city, :state,
+             (:cid, :name, :fantasy, :doc, :phone, :email,
+              :street, :number, :complement,
+              :neighborhood, :city, :state, :zip,
               :seller, :ptable, :credit, :pterm, :notes, 1,
               NOW(), NOW())'
         );
         $stmt->execute([
-            ':id' => $id,
             ':cid' => $companyId,
             ':name' => $data['name'],
             ':fantasy' => $data['fantasy_name'] ?? null,
-            ':ptype' => $data['person_type'] ?? null,
             ':doc' => $data['document'] ?? null,
             ':phone' => $data['phone'],
             ':email' => $data['email'] ?? null,
-            ':cep' => $data['address_cep'] ?? null,
             ':street' => $data['address_street'],
             ':number' => $data['address_number'] ?? null,
             ':complement' => $data['address_complement'] ?? null,
-            ':district' => $data['address_district'] ?? null,
+            ':neighborhood' => $data['address_neighborhood'] ?? null,
             ':city' => $data['address_city'] ?? null,
             ':state' => $data['address_state'] ?? null,
+            ':zip' => $data['address_zip_code'] ?? null,
             ':seller' => $data['seller_id'] ?? null,
             ':ptable' => $data['price_table'] ?? null,
             ':credit' => $data['credit_limit'] ?? null,
             ':pterm' => $data['payment_term'] ?? null,
             ':notes' => $data['notes'] ?? null,
         ]);
-        return $id;
+        return (string) $pdo->lastInsertId();
     }
 }

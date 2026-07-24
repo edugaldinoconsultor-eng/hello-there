@@ -47,25 +47,25 @@ final class CustomerController
         $body = $request->body ?? [];
 
         // REGRA DEFINITIVA: obrigatórios = name, phone, address_street.
+        // Colunas reais do MySQL — NÃO existem person_type / address_cep / address_district.
         $data = [
-            'name'             => V::require($body, 'name'),
-            'phone'            => V::require($body, 'phone'),
-            'address_street'   => V::require($body, 'address_street'),
-            'fantasy_name'     => V::optional($body, 'fantasy_name'),
-            'person_type'      => V::optional($body, 'person_type'),
-            'document'         => V::optional($body, 'document'),
-            'email'            => V::optional($body, 'email'),
-            'address_cep'      => V::optional($body, 'address_cep'),
-            'address_number'   => V::optional($body, 'address_number'),
-            'address_complement'=> V::optional($body, 'address_complement'),
-            'address_district' => V::optional($body, 'address_district'),
-            'address_city'     => V::optional($body, 'address_city'),
-            'address_state'    => V::optional($body, 'address_state'),
-            'seller_id'        => V::optional($body, 'seller_id'),
-            'price_table'      => V::optional($body, 'price_table'),
-            'credit_limit'     => V::optional($body, 'credit_limit', 'money'),
-            'payment_term'     => V::optional($body, 'payment_term'),
-            'notes'            => V::optional($body, 'notes'),
+            'name'                 => V::require($body, 'name'),
+            'phone'                => V::require($body, 'phone'),
+            'address_street'       => V::require($body, 'address_street'),
+            'fantasy_name'         => V::optional($body, 'fantasy_name'),
+            'document'             => V::optional($body, 'document'),
+            'email'                => V::optional($body, 'email'),
+            'address_number'       => V::optional($body, 'address_number'),
+            'address_complement'   => V::optional($body, 'address_complement'),
+            'address_neighborhood' => V::optional($body, 'address_neighborhood'),
+            'address_city'         => V::optional($body, 'address_city'),
+            'address_state'        => V::optional($body, 'address_state'),
+            'address_zip_code'     => V::optional($body, 'address_zip_code'),
+            'seller_id'            => V::optional($body, 'seller_id'),
+            'price_table'          => V::optional($body, 'price_table'),
+            'credit_limit'         => V::optional($body, 'credit_limit', 'money'),
+            'payment_term'         => V::optional($body, 'payment_term'),
+            'notes'                => V::optional($body, 'notes'),
         ];
 
         $repo = new CustomerRepository();
