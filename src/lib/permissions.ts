@@ -45,6 +45,7 @@ export const PERMISSIONS = [
 
   // produtos
   "products.view",
+  "products.create",
   "products.edit",
   "products.price.edit",
 
@@ -82,7 +83,7 @@ const MATRIX: Record<Role, Permission[]> = {
   manager: [
     "customers.view", "customers.create", "customers.edit",
     "orders.view", "orders.view.all", "orders.create", "orders.edit", "orders.cancel",
-    "products.view",
+    "products.view", "products.create",
     "stock.view",
     "reports.view.commercial",
     "settings.access",
