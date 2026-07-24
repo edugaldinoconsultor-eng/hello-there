@@ -441,25 +441,34 @@ export function NovoPedidoModal({
     setSubmitting(true);
     try {
       const seller = MOCK_SALESPEOPLE.find((s) => s.id === sellerId);
+
+      // ---- Transformação do payload antes do POST /orders ----
+      // 1. sale_type: "venda" (visual) → "balcao" (backend).
+      const apiSaleType = saleType === "venda" ? "balcao" : saleType;
+      // 2. payment_condition: "a_vista" (visual) → "30_dias" (backend).
+      const apiPaymentCondition =
+        paymentCondition === "a_vista" ? "30_dias" : paymentCondition;
+      // 3. Retirada: NÃO enviar expected_delivery_date nem delivery.
+      const isPickup = deliveryMethod === "retirada";
+
       // seller_id NÃO é enviado — backend define pelo usuário autenticado.
       const created = await createOrder({
         customerId: customer!.id,
         sellerId: sellerId || undefined,
         sellerName: seller?.name,
         priceTable: (priceTable || undefined) as never,
-        saleType,
+        saleType: apiSaleType,
         status: "confirmed",
         items: enrichedItems,
         subtotal: totals.subtotal,
         discount: totals.discount,
         freight: totals.freight,
         total: totals.total,
-        payment: buildPayment(),
+        payment: { condition: apiPaymentCondition, installmentsCount: installments.length },
         installments,
-        delivery: buildDelivery(),
+        ...(isPickup ? {} : { delivery: buildDelivery(), expectedDeliveryDate: expectedDeliveryDate || undefined }),
         notes: notes || undefined,
         orderDate,
-        expectedDeliveryDate: expectedDeliveryDate || undefined,
       });
       toast.success(`Pedido ${created.order_number} confirmado com sucesso.`);
       onOpenChange(false);
