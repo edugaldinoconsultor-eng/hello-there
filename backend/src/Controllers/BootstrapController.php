@@ -9,7 +9,6 @@ use SoulERP\Database\Connection;
 use SoulERP\Http\HttpException;
 use SoulERP\Http\Request;
 use SoulERP\Http\Response;
-use SoulERP\Support\Uuid;
 use SoulERP\Validation\V;
 
 /**
@@ -99,8 +98,8 @@ final class BootstrapController
             // Audit direto (sem AuthenticatedUser real — usa o próprio owner criado).
             $s = $pdo->prepare(
                 'INSERT INTO audit_logs
-                    (company_id, user_id, action, entity_type, entity_id, diff, ip, user_agent, created_at)
-                 VALUES (:c, :u, :a, :et, :eid, :d, :ip, :ua, NOW())'
+                    (company_id, user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent, created_at)
+                 VALUES (:c, :u, :a, :et, :eid, :ov, :nv, :ip, :ua, NOW())'
             );
             $s->execute([
                 ':c'   => $companyId,
@@ -108,9 +107,10 @@ final class BootstrapController
                 ':a'   => 'BOOTSTRAP',
                 ':et'  => 'company',
                 ':eid' => $companyId,
-                ':d'   => json_encode(['company' => $companyName, 'user_email' => $email]),
+                ':ov'  => null,
+                ':nv'  => json_encode(['companyName' => $companyName, 'email' => $email], JSON_UNESCAPED_UNICODE),
                 ':ip'  => $_SERVER['REMOTE_ADDR'] ?? null,
-                ':ua'  => isset($_SERVER['HTTP_USER_AGENT']) ? substr((string) $_SERVER['HTTP_USER_AGENT'], 0, 255) : null,
+                ':ua'  => isset($_SERVER['HTTP_USER_AGENT']) ? substr((string) $_SERVER['HTTP_USER_AGENT'], 0, 500) : null,
             ]);
 
             Connection::commit();

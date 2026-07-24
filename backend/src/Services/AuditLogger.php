@@ -29,19 +29,20 @@ final class AuditLogger
         // passamos :id, deixamos o MySQL gerar. company_id/user_id são BIGINT
         // UNSIGNED; PDO aceita string na bind e converte para o tipo da coluna.
         $sql = 'INSERT INTO audit_logs
-                (company_id, user_id, action, entity_type, entity_id, diff, ip, user_agent, created_at)
-                VALUES (:company_id, :user_id, :action, :entity_type, :entity_id, :diff, :ip, :ua, NOW())';
+                (company_id, user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent, created_at)
+                VALUES (:company_id, :user_id, :action, :entity_type, :entity_id, :old_values, :new_values, :ip_address, :user_agent, NOW())';
         try {
             $stmt = Connection::pdo()->prepare($sql);
             $stmt->execute([
-                ':company_id' => $user->companyId,
-                ':user_id' => $user->userId,
-                ':action' => $action,
+                ':company_id'  => $user->companyId,
+                ':user_id'     => $user->userId,
+                ':action'      => $action,
                 ':entity_type' => $entityType,
-                ':entity_id' => $entityId,
-                ':diff' => json_encode(['before' => $oldValues, 'after' => $newValues], JSON_UNESCAPED_UNICODE),
-                ':ip' => $ip,
-                ':ua' => $ua ? substr($ua, 0, 255) : null,
+                ':entity_id'   => $entityId,
+                ':old_values'  => $oldValues !== null ? json_encode($oldValues, JSON_UNESCAPED_UNICODE) : null,
+                ':new_values'  => $newValues !== null ? json_encode($newValues, JSON_UNESCAPED_UNICODE) : null,
+                ':ip_address'  => $ip,
+                ':user_agent'  => $ua ? substr($ua, 0, 500) : null,
             ]);
 
         } catch (\Throwable $e) {
