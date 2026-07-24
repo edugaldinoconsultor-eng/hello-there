@@ -137,6 +137,7 @@ function RootComponent() {
           <Outlet />
         </AppShell>
       </AuthGate>
+      <Toaster />
     </QueryClientProvider>
   );
 }
