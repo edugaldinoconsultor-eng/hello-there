@@ -2,7 +2,7 @@
  * Service de Autenticação — agora chamando o backend real.
  * Base: https://api.infodanutri.com.br/api/v1
  */
-import { apiFetch, ApiError, setUnauthorizedHandler } from "./api-client";
+import { apiFetch, ApiError, setUnauthorizedHandler, setCsrfToken } from "./api-client";
 import {
   applyApiSession,
   clearApiSession,
