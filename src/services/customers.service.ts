@@ -211,9 +211,13 @@ function toApiCreate(input: NewCustomerInput): ApiCreateBody {
 
 export const customersService = {
   async list(): Promise<Customer[]> {
-    const rows = await apiFetch<ApiCustomerRow[]>("/customers");
-    return (rows ?? []).map(fromApi);
+    const raw = await apiFetch<unknown>("/customers");
+    // Defesa: aceitar array puro, { data: [...] } (caso o api-client não tenha
+    // desembrulhado por algum motivo), { data: { data: [...] } }, ou null/vazio.
+    const rows = extractRows(raw);
+    return rows.map(fromApi);
   },
+
   async getById(id: string): Promise<Customer | undefined> {
     try {
       const row = await apiFetch<ApiCustomerRow>(`/customers/${encodeURIComponent(id)}`);
