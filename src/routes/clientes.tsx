@@ -27,7 +27,7 @@ export const Route = createFileRoute("/clientes")({
 });
 
 function ClientesPage() {
-  const { customers } = useCustomers();
+  const { customers, loading, error, refresh } = useCustomers();
   const [open, setOpen] = useState(false);
 
   // Header dispara "customer:new" — a página é a dona do modal.
@@ -105,7 +105,19 @@ function ClientesPage() {
           </Can>
         </div>
 
-        {customers.length === 0 ? (
+        {loading ? (
+          <section className="rounded-lg border border-border bg-card p-8 text-center text-xs text-muted-foreground">
+            Carregando clientes…
+          </section>
+        ) : error ? (
+          <section className="rounded-lg border border-destructive/40 bg-destructive/10 p-6 text-center">
+            <p className="text-sm font-medium text-destructive">Não foi possível carregar os clientes.</p>
+            <p className="mt-1 text-[11px] text-muted-foreground">{error}</p>
+            <Button size="sm" variant="outline" className="mt-3" onClick={() => void refresh()}>
+              Tentar novamente
+            </Button>
+          </section>
+        ) : customers.length === 0 ? (
           <EmptyState
             icon={Users}
             title="Nenhum cliente cadastrado ainda"

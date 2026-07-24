@@ -181,36 +181,41 @@ export function NovoClienteModal({
     }
   };
 
-  const onSubmit = handleSubmit((values) => {
+  const onSubmit = handleSubmit(async (values) => {
     const sp = MOCK_SALESPEOPLE.find((s) => s.id === values.commercial.salespersonId);
-    const created = createCustomer({
-      personType: values.personType,
-      legalName: values.legalName.trim(),
-      tradeName: values.tradeName || undefined,
-      document: values.document ? onlyDigits(values.document) : undefined,
-      phone: onlyDigits(values.phone),
-      email: values.email || undefined,
-      address: {
-        cep: values.address.cep ? onlyDigits(values.address.cep) : undefined,
-        street: values.address.street,
-        number: values.address.number || undefined,
-        complement: values.address.complement || undefined,
-        district: values.address.district || undefined,
-        city: values.address.city || undefined,
-        state: (values.address.state as string) || undefined,
-      },
-      commercial: {
-        salespersonId: values.commercial.salespersonId || undefined,
-        salespersonName: sp?.name,
-        priceTable: values.commercial.priceTable || undefined,
-        creditLimit: values.commercial.creditLimit ?? undefined,
-        paymentTerm: values.commercial.paymentTerm || undefined,
-        notes: values.commercial.notes || undefined,
-      },
-      status: values.status,
-    });
-    toast.success(`Cliente "${created.legalName}" cadastrado.`);
-    onOpenChange(false);
+    try {
+      const created = await createCustomer({
+        personType: values.personType,
+        legalName: values.legalName.trim(),
+        tradeName: values.tradeName || undefined,
+        document: values.document ? onlyDigits(values.document) : undefined,
+        phone: onlyDigits(values.phone),
+        email: values.email || undefined,
+        address: {
+          cep: values.address.cep ? onlyDigits(values.address.cep) : undefined,
+          street: values.address.street,
+          number: values.address.number || undefined,
+          complement: values.address.complement || undefined,
+          district: values.address.district || undefined,
+          city: values.address.city || undefined,
+          state: (values.address.state as string) || undefined,
+        },
+        commercial: {
+          salespersonId: values.commercial.salespersonId || undefined,
+          salespersonName: sp?.name,
+          priceTable: values.commercial.priceTable || undefined,
+          creditLimit: values.commercial.creditLimit ?? undefined,
+          paymentTerm: values.commercial.paymentTerm || undefined,
+          notes: values.commercial.notes || undefined,
+        },
+        status: values.status,
+      });
+      toast.success(`Cliente "${created.legalName}" cadastrado.`);
+      onOpenChange(false);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Falha ao salvar cliente.";
+      toast.error(msg);
+    }
   });
 
   return (
