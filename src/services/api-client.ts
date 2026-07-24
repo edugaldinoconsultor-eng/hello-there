@@ -125,8 +125,12 @@ export async function apiFetch<T = unknown>(
     };
     const code = (p.error?.code as ApiErrorCode) ?? codeFromStatus(response.status);
     const message = p.error?.message ?? p.message ?? `HTTP ${response.status}`;
+    // Diagnóstico temporário: log do payload cru para respostas de erro.
+    // eslint-disable-next-line no-console
+    console.warn(`[api-client] ${method} ${path} → ${response.status}`, payload);
     throw new ApiError(response.status, code, message, p.error?.details);
   }
+
 
   // API pode retornar { data: T } ou T diretamente.
   if (payload && typeof payload === "object" && "data" in (payload as Record<string, unknown>)) {

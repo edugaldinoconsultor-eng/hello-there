@@ -209,11 +209,35 @@ function toApiCreate(input: NewCustomerInput): ApiCreateBody {
 
 // ---------- Fachada de rede ----------
 
+function extractRows(raw: unknown): ApiCustomerRow[] {
+  if (raw === null || raw === undefined) return [];
+  if (Array.isArray(raw)) return raw as ApiCustomerRow[];
+  if (typeof raw === "object") {
+    const obj = raw as Record<string, unknown>;
+    if (Array.isArray(obj.data)) return obj.data as ApiCustomerRow[];
+    if (obj.data && typeof obj.data === "object") {
+      const inner = (obj.data as Record<string, unknown>).data;
+      if (Array.isArray(inner)) return inner as ApiCustomerRow[];
+    }
+    if (Array.isArray(obj.rows)) return obj.rows as ApiCustomerRow[];
+    if (Array.isArray(obj.items)) return obj.items as ApiCustomerRow[];
+  }
+  // Payload inesperado — logar para diagnóstico e tratar como vazio (não erro).
+  // eslint-disable-next-line no-console
+  console.warn("[customers.service] payload inesperado de GET /customers:", raw);
+  return [];
+}
+
+
 export const customersService = {
   async list(): Promise<Customer[]> {
-    const rows = await apiFetch<ApiCustomerRow[]>("/customers");
-    return (rows ?? []).map(fromApi);
+    const raw = await apiFetch<unknown>("/customers");
+    // Defesa: aceitar array puro, { data: [...] } (caso o api-client não tenha
+    // desembrulhado por algum motivo), { data: { data: [...] } }, ou null/vazio.
+    const rows = extractRows(raw);
+    return rows.map(fromApi);
   },
+
   async getById(id: string): Promise<Customer | undefined> {
     try {
       const row = await apiFetch<ApiCustomerRow>(`/customers/${encodeURIComponent(id)}`);
