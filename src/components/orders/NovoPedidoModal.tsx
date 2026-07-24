@@ -946,10 +946,14 @@ export function NovoPedidoModal({
             <Button variant="outline" onClick={() => onOpenChange(false)} disabled={submitting}>
               Cancelar
             </Button>
-            <Button variant="outline" onClick={() => handleSubmit("draft")} disabled={submitting}>
+            <Button
+              variant="outline"
+              disabled
+              title="Rascunho ainda não disponível no backend."
+            >
               Salvar rascunho
             </Button>
-            <Button onClick={() => handleSubmit("confirmed")} disabled={submitting}>
+            <Button onClick={handleSubmit} disabled={submitting}>
               {submitting ? (
                 <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Salvando…</>
               ) : "Confirmar pedido"}
