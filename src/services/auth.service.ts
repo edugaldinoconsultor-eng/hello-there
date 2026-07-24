@@ -13,25 +13,35 @@ import {
 } from "@/mocks/session";
 
 async function fetchMe(): Promise<ApiSessionPayload | null> {
+  const ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
+  const timer = ctrl ? setTimeout(() => ctrl.abort(), 8000) : null;
   try {
-    return await apiFetch<ApiSessionPayload>("/auth/me");
+    return await apiFetch<ApiSessionPayload>("/auth/me", { signal: ctrl?.signal });
   } catch (err) {
     if (err instanceof ApiError && err.status === 401) return null;
     throw err;
+  } finally {
+    if (timer) clearTimeout(timer);
   }
 }
 
 export const authService = {
-  /** Bootstrap: consulta /auth/me e hidrata a sessão. */
+  /** Bootstrap: consulta /auth/me e hidrata a sessão. Nunca deixa em loading. */
   async bootstrap(): Promise<boolean> {
     markAuthLoading();
-    const me = await fetchMe();
-    if (!me) {
+    try {
+      const me = await fetchMe();
+      if (!me) {
+        clearApiSession();
+        return false;
+      }
+      applyApiSession(me);
+      return true;
+    } catch (err) {
+      console.error("bootstrap /auth/me falhou:", err);
       clearApiSession();
       return false;
     }
-    applyApiSession(me);
-    return true;
   },
 
   async me(): Promise<ApiSessionPayload | null> {
