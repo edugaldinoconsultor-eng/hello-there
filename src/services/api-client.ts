@@ -39,6 +39,15 @@ export class ApiError extends Error {
   }
 }
 
+// ---------- Handler global de 401 ----------
+// O auth.service registra um callback aqui no boot para não criar
+// dependência circular (api-client → session).
+type UnauthorizedHandler = (ctx: { url: string; method: string }) => void;
+let unauthorizedHandler: UnauthorizedHandler | null = null;
+export function setUnauthorizedHandler(h: UnauthorizedHandler | null) {
+  unauthorizedHandler = h;
+}
+
 
 const CSRF_COOKIE = "soulerp_csrf";
 
