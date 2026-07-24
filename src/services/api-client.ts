@@ -23,6 +23,14 @@ export class ApiError extends Error {
   status: number;
   code: ApiErrorCode;
   details?: unknown;
+  /** Diagnóstico: URL efetivamente chamada (com base). */
+  url?: string;
+  /** Diagnóstico: método HTTP usado. */
+  method?: string;
+  /** Diagnóstico: se a requisição enviou cookies. */
+  withCredentials?: boolean;
+  /** Diagnóstico: corpo cru da resposta, como texto. */
+  rawBody?: string;
   constructor(status: number, code: ApiErrorCode, message: string, details?: unknown) {
     super(message);
     this.status = status;
@@ -30,6 +38,7 @@ export class ApiError extends Error {
     this.details = details;
   }
 }
+
 
 const CSRF_COOKIE = "soulerp_csrf";
 
