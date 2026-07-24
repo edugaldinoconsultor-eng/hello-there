@@ -435,23 +435,20 @@ export function NovoPedidoModal({
     };
   }
 
-  async function handleSubmit(status: "draft" | "confirmed") {
-    if (status === "confirmed") {
-      const err = validate();
-      if (err) { toast.error(err); return; }
-    } else {
-      if (!customer) { toast.error("Selecione um cliente para salvar o rascunho."); return; }
-    }
+  async function handleSubmit() {
+    const err = validate();
+    if (err) { toast.error(err); return; }
     setSubmitting(true);
     try {
       const seller = MOCK_SALESPEOPLE.find((s) => s.id === sellerId);
-      const created = createOrder({
+      // seller_id NÃO é enviado — backend define pelo usuário autenticado.
+      const created = await createOrder({
         customerId: customer!.id,
         sellerId: sellerId || undefined,
         sellerName: seller?.name,
         priceTable: (priceTable || undefined) as never,
         saleType,
-        status,
+        status: "confirmed",
         items: enrichedItems,
         subtotal: totals.subtotal,
         discount: totals.discount,
@@ -464,12 +461,23 @@ export function NovoPedidoModal({
         orderDate,
         expectedDeliveryDate: expectedDeliveryDate || undefined,
       });
-      toast.success(
-        status === "confirmed"
-          ? `Pedido ${created.orderNumber} confirmado.`
-          : `Rascunho ${created.orderNumber} salvo.`,
-      );
+      toast.success(`Pedido ${created.order_number} confirmado com sucesso.`);
       onOpenChange(false);
+    } catch (e) {
+      // Mensagens amigáveis para os erros esperados do backend.
+      const anyErr = e as { status?: number; message?: string };
+      if (anyErr?.status === 403) {
+        toast.error("Você não possui permissão para criar pedidos.");
+      } else if (anyErr?.status === 404) {
+        toast.error(anyErr.message ?? "Cliente não encontrado nesta empresa.");
+      } else if (anyErr?.status === 422) {
+        toast.error(anyErr.message ?? "Dados inválidos no pedido.");
+      } else if (anyErr?.status === 401) {
+        // Fluxo global de sessão já cuida do redirect.
+        toast.error("Sessão expirada. Faça login novamente.");
+      } else {
+        toast.error(anyErr?.message ?? "Não foi possível confirmar o pedido.");
+      }
     } finally {
       setSubmitting(false);
     }
