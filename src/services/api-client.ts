@@ -118,7 +118,11 @@ export async function apiFetch<T = unknown>(
       signal: opts.signal,
     });
   } catch (err) {
-    throw new ApiError(0, "NETWORK_ERROR", (err as Error).message || "Falha de rede");
+    const netErr = new ApiError(0, "NETWORK_ERROR", (err as Error).message || "Falha de rede");
+    netErr.url = url;
+    netErr.method = method;
+    netErr.withCredentials = true;
+    throw netErr;
   }
 
   const text = await response.text();
@@ -134,11 +138,16 @@ export async function apiFetch<T = unknown>(
     };
     const code = (p.error?.code as ApiErrorCode) ?? codeFromStatus(response.status);
     const message = p.error?.message ?? p.message ?? `HTTP ${response.status}`;
-    // Diagnóstico temporário: log do payload cru para respostas de erro.
     // eslint-disable-next-line no-console
     console.warn(`[api-client] ${method} ${path} → ${response.status}`, payload);
-    throw new ApiError(response.status, code, message, p.error?.details);
+    const apiErr = new ApiError(response.status, code, message, p.error?.details);
+    apiErr.url = url;
+    apiErr.method = method;
+    apiErr.withCredentials = true;
+    apiErr.rawBody = text;
+    throw apiErr;
   }
+
 
 
   // API pode retornar { data: T } ou T diretamente.
