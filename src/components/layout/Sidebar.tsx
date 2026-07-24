@@ -148,6 +148,7 @@ export function Sidebar({ open }: { open: boolean; onToggle: () => void }) {
         </div>
 
         <button
+          onClick={() => { void authService.logout(); }}
           className={cn(
             "mt-1 flex w-full items-center gap-3 rounded-md px-2 py-2 text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent/60",
             !open && "justify-center",
