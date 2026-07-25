@@ -68,7 +68,7 @@ final class OrderRepository
               :pcond, :notes, NOW(), NOW())'
         );
         try {
-            error_log('[ORDER DEBUG] tentando inserir order');
+            error_log('[ORDER FLOW] entrando insertOrderHeader');
             $stmt->execute([
                 ':num' => $data['order_number'],
                 ':cid' => $data['company_id'],
