@@ -53,7 +53,7 @@ final class OrderRepository
      * Cria order + items + installments + delivery em UMA transação.
      * Caller (controller) chama BEGIN e COMMIT/ROLLBACK.
      */
-    public function insertOrderHeader(array $data): string
+    public function insertOrderHeader(array $data): int
     {
         $stmt = Connection::pdo()->prepare(
             'INSERT INTO orders
@@ -90,65 +90,59 @@ final class OrderRepository
             error_log('[ORDER DEBUG ERROR] ' . $e->getMessage());
             throw $e;
         }
-        return (string) Connection::pdo()->lastInsertId();
+        return (int) Connection::pdo()->lastInsertId();
     }
 
-    public function insertItem(string $orderId, array $item): void
+    public function insertItem(int $orderId, array $item): void
     {
         $stmt = Connection::pdo()->prepare(
             'INSERT INTO order_items
-             (id, order_id, product_id, product_name_snapshot, sku_snapshot, category_snapshot,
+             (order_id, product_id, product_name_snapshot, sku_snapshot, category_snapshot,
               quantity, unit_price, discount, subtotal, stock_at_order)
              VALUES
-             (:id, :oid, :pid, :pname, :sku, :cat, :qty, :price, :disc, :sub, :stock)'
+             (:oid, :pid, :pname, :sku, :cat, :qty, :price, :disc, :sub, :stock)'
         );
-        $stmt->execute([
-            ':id' => Uuid::v4(),
-            ':oid' => $orderId,
-            ':pid' => $item['product_id'],
-            ':pname' => $item['product_name_snapshot'],
-            ':sku' => $item['sku_snapshot'] ?? null,
-            ':cat' => $item['category_snapshot'] ?? null,
-            ':qty' => $item['quantity'],
-            ':price' => $item['unit_price'],
-            ':disc' => $item['discount'] ?? 0,
-            ':sub' => $item['subtotal'],
-            ':stock' => $item['stock_at_order'] ?? null,
-        ]);
+        $stmt->bindValue(':oid', $orderId, \PDO::PARAM_INT);
+        $stmt->bindValue(':pid', $item['product_id']);
+        $stmt->bindValue(':pname', $item['product_name_snapshot']);
+        $stmt->bindValue(':sku', $item['sku_snapshot'] ?? null);
+        $stmt->bindValue(':cat', $item['category_snapshot'] ?? null);
+        $stmt->bindValue(':qty', (int) $item['quantity'], \PDO::PARAM_INT);
+        $stmt->bindValue(':price', $item['unit_price']);
+        $stmt->bindValue(':disc', $item['discount'] ?? 0);
+        $stmt->bindValue(':sub', $item['subtotal']);
+        $stmt->bindValue(':stock', $item['stock_at_order'] ?? null, $item['stock_at_order'] === null ? \PDO::PARAM_NULL : \PDO::PARAM_INT);
+        $stmt->execute();
     }
 
-    public function insertInstallment(string $orderId, array $ip): void
+    public function insertInstallment(int $orderId, array $ip): void
     {
         $stmt = Connection::pdo()->prepare(
             'INSERT INTO order_installments
-             (id, order_id, installment_number, due_date, amount, status, paid)
-             VALUES (:id, :oid, :num, :due, :amt, "pending", 0)'
+             (order_id, installment_number, due_date, amount, status, paid)
+             VALUES (:oid, :num, :due, :amt, "pending", 0)'
         );
-        $stmt->execute([
-            ':id' => Uuid::v4(),
-            ':oid' => $orderId,
-            ':num' => $ip['installment_number'],
-            ':due' => $ip['due_date'],
-            ':amt' => $ip['amount'],
-        ]);
+        $stmt->bindValue(':oid', $orderId, \PDO::PARAM_INT);
+        $stmt->bindValue(':num', (int) $ip['installment_number'], \PDO::PARAM_INT);
+        $stmt->bindValue(':due', $ip['due_date']);
+        $stmt->bindValue(':amt', $ip['amount']);
+        $stmt->execute();
     }
 
-    public function insertDelivery(string $orderId, array $d): void
+    public function insertDelivery(int $orderId, array $d): void
     {
         $stmt = Connection::pdo()->prepare(
             'INSERT INTO order_deliveries
-             (id, order_id, type, address_snapshot, freight, scheduled_for, notes)
-             VALUES (:id, :oid, :type, :addr, :fr, :sched, :notes)'
+             (order_id, type, address_snapshot, freight, scheduled_for, notes)
+             VALUES (:oid, :type, :addr, :fr, :sched, :notes)'
         );
-        $stmt->execute([
-            ':id' => Uuid::v4(),
-            ':oid' => $orderId,
-            ':type' => $d['type'],
-            ':addr' => isset($d['address_snapshot']) ? json_encode($d['address_snapshot'], JSON_UNESCAPED_UNICODE) : null,
-            ':fr' => $d['freight'] ?? 0,
-            ':sched' => $d['scheduled_for'] ?? null,
-            ':notes' => $d['notes'] ?? null,
-        ]);
+        $stmt->bindValue(':oid', $orderId, \PDO::PARAM_INT);
+        $stmt->bindValue(':type', $d['type']);
+        $stmt->bindValue(':addr', isset($d['address_snapshot']) ? json_encode($d['address_snapshot'], JSON_UNESCAPED_UNICODE) : null);
+        $stmt->bindValue(':fr', $d['freight'] ?? 0);
+        $stmt->bindValue(':sched', $d['scheduled_for'] ?? null);
+        $stmt->bindValue(':notes', $d['notes'] ?? null);
+        $stmt->execute();
     }
 
     public function updateStatus(string $companyId, string $orderId, string $status): void
