@@ -42,10 +42,12 @@ final class Kernel
             Response::error($e->status, $e->errorCode, $e->getMessage(), $e->details);
         } catch (Throwable $e) {
             error_log('[SoulERP] Uncaught: ' . $e::class . ' ' . $e->getMessage());
-            $message = AppConfig::isDev()
-                ? $e->getMessage()
-                : 'Erro interno. Tente novamente em instantes.';
-            Response::error(500, 'INTERNAL_ERROR', $message);
+            // DIAGNÓSTICO TEMPORÁRIO — remover antes de produção final.
+            Response::error(500, 'INTERNAL_ERROR', $e::class . ': ' . $e->getMessage(), [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => explode("\n", $e->getTraceAsString()),
+            ]);
         }
     }
 }
