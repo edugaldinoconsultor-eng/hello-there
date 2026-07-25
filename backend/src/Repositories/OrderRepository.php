@@ -67,22 +67,29 @@ final class OrderRepository
               :subtotal, :discount, :freight, :total,
               :pcond, :notes, NOW(), NOW())'
         );
-        $stmt->execute([
-            ':num' => $data['order_number'],
-            ':cid' => $data['company_id'],
-            ':cust' => $data['customer_id'],
-            ':sell' => $data['seller_id'],
-            ':status' => $data['status'],
-            ':stype' => $data['sale_type'],
-            ':odate' => $data['order_date'],
-            ':edate' => $data['expected_delivery_date'] ?? null,
-            ':subtotal' => $data['subtotal'],
-            ':discount' => $data['discount'],
-            ':freight' => $data['freight'],
-            ':total' => $data['total'],
-            ':pcond' => $data['payment_condition'] ?? null,
-            ':notes' => $data['notes'] ?? null,
-        ]);
+        try {
+            error_log('[ORDER DEBUG] tentando inserir order');
+            $stmt->execute([
+                ':num' => $data['order_number'],
+                ':cid' => $data['company_id'],
+                ':cust' => $data['customer_id'],
+                ':sell' => $data['seller_id'],
+                ':status' => $data['status'],
+                ':stype' => $data['sale_type'],
+                ':odate' => $data['order_date'],
+                ':edate' => $data['expected_delivery_date'] ?? null,
+                ':subtotal' => $data['subtotal'],
+                ':discount' => $data['discount'],
+                ':freight' => $data['freight'],
+                ':total' => $data['total'],
+                ':pcond' => $data['payment_condition'] ?? null,
+                ':notes' => $data['notes'] ?? null,
+            ]);
+            error_log('[ORDER DEBUG] inserido id=' . Connection::pdo()->lastInsertId());
+        } catch (\PDOException $e) {
+            error_log('[ORDER DEBUG ERROR] ' . $e->getMessage());
+            throw $e;
+        }
         return (string) Connection::pdo()->lastInsertId();
     }
 
