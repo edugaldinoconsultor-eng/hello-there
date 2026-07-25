@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace SoulERP\Repositories;
 
 use SoulERP\Database\Connection;
-use SoulERP\Support\Uuid;
+
 
 final class OrderRepository
 {
@@ -55,21 +55,19 @@ final class OrderRepository
      */
     public function insertOrderHeader(array $data): string
     {
-        $id = Uuid::v4();
         $stmt = Connection::pdo()->prepare(
             'INSERT INTO orders
-             (id, order_number, company_id, customer_id, seller_id, status, sale_type,
+             (order_number, company_id, customer_id, seller_id, status, sale_type,
               order_date, expected_delivery_date,
               subtotal, discount, freight, total,
               payment_condition, notes, created_at, updated_at)
              VALUES
-             (:id, :num, :cid, :cust, :sell, :status, :stype,
+             (:num, :cid, :cust, :sell, :status, :stype,
               :odate, :edate,
               :subtotal, :discount, :freight, :total,
               :pcond, :notes, NOW(), NOW())'
         );
         $stmt->execute([
-            ':id' => $id,
             ':num' => $data['order_number'],
             ':cid' => $data['company_id'],
             ':cust' => $data['customer_id'],
@@ -85,7 +83,7 @@ final class OrderRepository
             ':pcond' => $data['payment_condition'] ?? null,
             ':notes' => $data['notes'] ?? null,
         ]);
-        return $id;
+        return (string) Connection::pdo()->lastInsertId();
     }
 
     public function insertItem(string $orderId, array $item): void
