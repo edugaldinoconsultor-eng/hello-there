@@ -155,7 +155,9 @@ final class OrderRepository
         } else {
             $stmt->bindValue(':stock', (int) $stockSnap, \PDO::PARAM_INT);
         }
+        error_log('[ORDER FLOW] entrando insertItem');
         $stmt->execute();
+        error_log('[ORDER FLOW] sucesso insertItem');
     }
 
     public function insertInstallment(int $orderId, array $ip): void
