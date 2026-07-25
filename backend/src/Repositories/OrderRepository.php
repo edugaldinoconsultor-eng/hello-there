@@ -93,8 +93,47 @@ final class OrderRepository
         return (int) Connection::pdo()->lastInsertId();
     }
 
-    public function insertItem(int $orderId, array $item): void
+    /**
+     * Insere um item do pedido.
+     *
+     * Aceita payload mínimo do frontend ({product_id, quantity, unit_price, discount})
+     * e completa snapshots + subtotal a partir da tabela products quando ausentes.
+     * Cálculo: subtotal = (quantity * unit_price) - discount.
+     */
+    public function insertItem(string $orderId, array $item): void
     {
+        $productId = (string) ($item['product_id'] ?? '');
+        $quantity  = (int) ($item['quantity'] ?? 0);
+        $unitPrice = (float) ($item['unit_price'] ?? 0);
+        $discount  = (float) ($item['discount'] ?? 0);
+
+        $nameSnap  = $item['product_name_snapshot'] ?? null;
+        $skuSnap   = $item['sku_snapshot'] ?? null;
+        $catSnap   = $item['category_snapshot'] ?? null;
+        $stockSnap = array_key_exists('stock_at_order', $item) ? $item['stock_at_order'] : null;
+
+        // Se algum snapshot essencial não veio, buscar do cadastro do produto.
+        if ($nameSnap === null || $skuSnap === null || $catSnap === null || $stockSnap === null) {
+            $ps = Connection::pdo()->prepare(
+                'SELECT name, sku, category, stock, price FROM products WHERE id = :pid LIMIT 1'
+            );
+            $ps->execute([':pid' => $productId]);
+            $prod = $ps->fetch();
+            if ($prod !== false) {
+                if ($nameSnap === null) $nameSnap = $prod['name'] ?? null;
+                if ($skuSnap === null)  $skuSnap  = $prod['sku'] ?? null;
+                if ($catSnap === null)  $catSnap  = $prod['category'] ?? null;
+                if ($stockSnap === null) $stockSnap = $prod['stock'] ?? null;
+                if ($unitPrice <= 0 && isset($prod['price'])) {
+                    $unitPrice = (float) $prod['price'];
+                }
+            }
+        }
+
+        // Subtotal sempre recalculado no backend — nunca confiar no cliente.
+        $subtotal = ($quantity * $unitPrice) - $discount;
+        if ($subtotal < 0) $subtotal = 0;
+
         $stmt = Connection::pdo()->prepare(
             'INSERT INTO order_items
              (order_id, product_id, product_name_snapshot, sku_snapshot, category_snapshot,
@@ -102,16 +141,20 @@ final class OrderRepository
              VALUES
              (:oid, :pid, :pname, :sku, :cat, :qty, :price, :disc, :sub, :stock)'
         );
-        $stmt->bindValue(':oid', $orderId, \PDO::PARAM_INT);
-        $stmt->bindValue(':pid', $item['product_id']);
-        $stmt->bindValue(':pname', $item['product_name_snapshot']);
-        $stmt->bindValue(':sku', $item['sku_snapshot'] ?? null);
-        $stmt->bindValue(':cat', $item['category_snapshot'] ?? null);
-        $stmt->bindValue(':qty', (int) $item['quantity'], \PDO::PARAM_INT);
-        $stmt->bindValue(':price', $item['unit_price']);
-        $stmt->bindValue(':disc', $item['discount'] ?? 0);
-        $stmt->bindValue(':sub', $item['subtotal']);
-        $stmt->bindValue(':stock', $item['stock_at_order'] ?? null, $item['stock_at_order'] === null ? \PDO::PARAM_NULL : \PDO::PARAM_INT);
+        $stmt->bindValue(':oid', (int) $orderId, \PDO::PARAM_INT);
+        $stmt->bindValue(':pid', $productId);
+        $stmt->bindValue(':pname', $nameSnap !== null ? (string) $nameSnap : '');
+        $stmt->bindValue(':sku', $skuSnap !== null ? (string) $skuSnap : null);
+        $stmt->bindValue(':cat', $catSnap !== null ? (string) $catSnap : null);
+        $stmt->bindValue(':qty', $quantity, \PDO::PARAM_INT);
+        $stmt->bindValue(':price', number_format($unitPrice, 2, '.', ''));
+        $stmt->bindValue(':disc', number_format($discount, 2, '.', ''));
+        $stmt->bindValue(':sub', number_format($subtotal, 2, '.', ''));
+        if ($stockSnap === null) {
+            $stmt->bindValue(':stock', null, \PDO::PARAM_NULL);
+        } else {
+            $stmt->bindValue(':stock', (int) $stockSnap, \PDO::PARAM_INT);
+        }
         $stmt->execute();
     }
 
