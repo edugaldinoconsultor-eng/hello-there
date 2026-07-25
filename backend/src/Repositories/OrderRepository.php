@@ -85,7 +85,7 @@ final class OrderRepository
                 ':pcond' => $data['payment_condition'] ?? null,
                 ':notes' => $data['notes'] ?? null,
             ]);
-            error_log('[ORDER DEBUG] inserido id=' . Connection::pdo()->lastInsertId());
+            error_log('[ORDER FLOW] sucesso insertOrderHeader id=' . Connection::pdo()->lastInsertId());
         } catch (\PDOException $e) {
             error_log('[ORDER DEBUG ERROR] ' . $e->getMessage());
             throw $e;
