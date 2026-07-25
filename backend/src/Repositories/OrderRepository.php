@@ -189,7 +189,9 @@ final class OrderRepository
         $stmt->bindValue(':fr', $d['freight'] ?? 0);
         $stmt->bindValue(':sched', $d['scheduled_for'] ?? null);
         $stmt->bindValue(':notes', $d['notes'] ?? null);
+        error_log('[ORDER FLOW] entrando insertDelivery');
         $stmt->execute();
+        error_log('[ORDER FLOW] sucesso insertDelivery');
     }
 
     public function updateStatus(string $companyId, string $orderId, string $status): void
