@@ -68,7 +68,7 @@ final class OrderRepository
               :pcond, :notes, NOW(), NOW())'
         );
         try {
-            error_log('[ORDER DEBUG] tentando inserir order');
+            error_log('[ORDER FLOW] entrando insertOrderHeader');
             $stmt->execute([
                 ':num' => $data['order_number'],
                 ':cid' => $data['company_id'],
@@ -85,7 +85,7 @@ final class OrderRepository
                 ':pcond' => $data['payment_condition'] ?? null,
                 ':notes' => $data['notes'] ?? null,
             ]);
-            error_log('[ORDER DEBUG] inserido id=' . Connection::pdo()->lastInsertId());
+            error_log('[ORDER FLOW] sucesso insertOrderHeader id=' . Connection::pdo()->lastInsertId());
         } catch (\PDOException $e) {
             error_log('[ORDER DEBUG ERROR] ' . $e->getMessage());
             throw $e;
@@ -155,7 +155,9 @@ final class OrderRepository
         } else {
             $stmt->bindValue(':stock', (int) $stockSnap, \PDO::PARAM_INT);
         }
+        error_log('[ORDER FLOW] entrando insertItem');
         $stmt->execute();
+        error_log('[ORDER FLOW] sucesso insertItem');
     }
 
     public function insertInstallment(int $orderId, array $ip): void
@@ -169,7 +171,9 @@ final class OrderRepository
         $stmt->bindValue(':num', (int) $ip['installment_number'], \PDO::PARAM_INT);
         $stmt->bindValue(':due', $ip['due_date']);
         $stmt->bindValue(':amt', $ip['amount']);
+        error_log('[ORDER FLOW] entrando insertInstallment');
         $stmt->execute();
+        error_log('[ORDER FLOW] sucesso insertInstallment');
     }
 
     public function insertDelivery(int $orderId, array $d): void
@@ -185,7 +189,9 @@ final class OrderRepository
         $stmt->bindValue(':fr', $d['freight'] ?? 0);
         $stmt->bindValue(':sched', $d['scheduled_for'] ?? null);
         $stmt->bindValue(':notes', $d['notes'] ?? null);
+        error_log('[ORDER FLOW] entrando insertDelivery');
         $stmt->execute();
+        error_log('[ORDER FLOW] sucesso insertDelivery');
     }
 
     public function updateStatus(string $companyId, string $orderId, string $status): void
