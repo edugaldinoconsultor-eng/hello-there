@@ -171,7 +171,9 @@ final class OrderRepository
         $stmt->bindValue(':num', (int) $ip['installment_number'], \PDO::PARAM_INT);
         $stmt->bindValue(':due', $ip['due_date']);
         $stmt->bindValue(':amt', $ip['amount']);
+        error_log('[ORDER FLOW] entrando insertInstallment');
         $stmt->execute();
+        error_log('[ORDER FLOW] sucesso insertInstallment');
     }
 
     public function insertDelivery(int $orderId, array $d): void
