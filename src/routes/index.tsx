@@ -37,16 +37,16 @@ import { useSession } from "@/mocks/session";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Hoje · SoulERP" },
+      { title: "SoulERP" },
       {
         name: "description",
         content:
           "Central operacional de hoje: vendas, pedidos, contas a receber, estoque crítico e recomendações da Soul AI.",
       },
-      { property: "og:title", content: "Hoje · SoulERP" },
+      { property: "og:title", content: "SoulERP" },
       {
         property: "og:description",
-        content: "Central operacional diária para distribuidores de cosméticos.",
+        content: "Central operacional de hoje: vendas, pedidos, contas a receber, estoque crítico e recomendações da Soul AI.",
       },
     ],
   }),

@@ -80,21 +80,25 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "SoulERP — ERP + CRM para distribuidores de cosméticos" },
+      { title: "SoulERP" },
       {
         name: "description",
         content:
-          "SoulERP é o ERP + CRM completo para distribuidores de cosméticos: vendas, pedidos, estoque, financeiro e inteligência em uma única plataforma.",
+          "Central operacional de hoje: vendas, pedidos, contas a receber, estoque crítico e recomendações da Soul AI.",
       },
       { name: "author", content: "SoulERP" },
-      { property: "og:title", content: "SoulERP — ERP + CRM para distribuidores de cosméticos" },
+      { property: "og:title", content: "SoulERP" },
       {
         property: "og:description",
         content:
-          "Central operacional para distribuidores de cosméticos com Soul AI integrada.",
+          "Central operacional de hoje: vendas, pedidos, contas a receber, estoque crítico e recomendações da Soul AI.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "SoulERP" },
+      { name: "twitter:description", content: "Central operacional de hoje: vendas, pedidos, contas a receber, estoque crítico e recomendações da Soul AI." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/d50f5f2c-f1ab-436a-9511-d07e7e409499/id-preview-e2fd4de0--d864102f-80f4-4268-87ac-bda274124536.lovable.app-1785353408530.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/d50f5f2c-f1ab-436a-9511-d07e7e409499/id-preview-e2fd4de0--d864102f-80f4-4268-87ac-bda274124536.lovable.app-1785353408530.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
