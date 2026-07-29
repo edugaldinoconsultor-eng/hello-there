@@ -48,4 +48,10 @@ return static function (Router $r): void {
     $r->post ("{$prefix}/orders",              [OrderController::class, 'create']);
     $r->patch("{$prefix}/orders/{id}",         [OrderController::class, 'update']);
     $r->post ("{$prefix}/orders/{id}/cancel",  [OrderController::class, 'cancel']);
+
+    // Inventory (Estoque) — leitura: stock.view | escrita: stock.adjust
+    $r->get ("{$prefix}/inventory/balances",                 [InventoryController::class, 'balances']);
+    $r->get ("{$prefix}/inventory/movements",                [InventoryController::class, 'movements']);
+    $r->get ("{$prefix}/inventory/products/{id}/movements",  [InventoryController::class, 'movementsByProduct']);
+    $r->post("{$prefix}/inventory/movements",                [InventoryController::class, 'createMovement']);
 };
