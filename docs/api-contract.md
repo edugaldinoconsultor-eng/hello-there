@@ -155,3 +155,42 @@ A IA nunca:
 - Autenticação prefere cookie httpOnly + CSRF token, o que funciona em
   qualquer stack (Node/Express, PHP/Laravel, Go, etc.) que a Hostinger
   suportar no plano final.
+
+---
+
+## Inventory (Estoque)
+
+Sessão obrigatória. Leitura exige `stock.view`; escrita exige `stock.adjust`.
+`company_id` nunca vem do cliente — é derivado da sessão.
+
+### `GET /inventory/balances`
+Query: `query`, `belowMinimum=1`, `page`, `pageSize`.
+```json
+[{ "id": 12, "sku": "ABC-1", "name": "Produto", "category": "Bebidas",
+   "price": "19.90", "stock": 40, "minimum_stock": 10,
+   "last_movement_at": "2026-07-29 21:10:00" }]
+```
+
+### `GET /inventory/movements`
+Query: `productId`, `type`, `page`, `pageSize`. Ordenado por `id DESC`.
+```json
+[{ "id": 88, "product_id": 12, "product_name": "Produto", "product_sku": "ABC-1",
+   "type": "IN", "quantity": 10, "stock_before": 30, "stock_after": 40,
+   "reason": "Recebimento NF 1234", "reference_type": "order",
+   "reference_id": 209, "order_number": "PED-2026-0006",
+   "user_name": "Ana", "created_at": "2026-07-29 21:10:00" }]
+```
+
+### `GET /inventory/products/{id}/movements`
+Mesmo shape, filtrado por produto.
+
+### `POST /inventory/movements`
+```json
+{ "product_id": 12, "type": "OUT", "quantity": 5,
+  "reason": "Quebra no transporte",
+  "reference_type": "order", "reference_id": 209 }
+```
+`201` devolve a movimentação criada com `stock_before` / `stock_after`.
+
+Erros: `422 VALIDATION_ERROR`, `422 INSUFFICIENT_STOCK`,
+`422 PRODUCT_INACTIVE`, `404 NOT_FOUND`, `403 FORBIDDEN`.
