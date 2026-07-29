@@ -20,10 +20,23 @@ final class Cors
     /** @var string[] */
     private const DEFAULT_ORIGINS = [
         'https://id-preview--d864102f-80f4-4268-87ac-bda274124536.lovable.app',
+        'https://d864102f-80f4-4268-87ac-bda274124536.lovableproject.com',
         'https://mellow-mutual-mix.lovable.app',
         'http://localhost:8080',
         'http://127.0.0.1:8080',
     ];
+
+    /**
+     * Sufixos confiaveis: o preview do Lovable troca de host
+     * (*.lovableproject.com / *.lovable.app) sem aviso.
+     *
+     * @var string[]
+     */
+    private const TRUSTED_SUFFIXES = [
+        '.lovableproject.com',
+        '.lovable.app',
+    ];
+
 
     public static function apply(Request $request): void
     {
