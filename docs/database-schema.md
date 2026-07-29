@@ -272,3 +272,26 @@ Toda query de leitura ou escrita deve incluir `WHERE company_id = :ctx`
 (ou equivalente via ORM). O `company_id` **não vem do body/query** —
 vem do vínculo `company_users` resolvido a partir do token autenticado.
 Ver `docs/api-contract.md` §Segurança.
+
+## 14. `inventory_movements` (Estoque — Kardex)
+
+Migration: `backend/database/005_inventory_movements.sql`.
+
+| Campo          | Tipo                | Notas                                              |
+|----------------|---------------------|----------------------------------------------------|
+| id             | BIGINT UNSIGNED PK  | AUTO_INCREMENT                                      |
+| company_id     | BIGINT UNSIGNED     | isolamento multi-empresa                            |
+| product_id     | BIGINT UNSIGNED     | produto movimentado                                 |
+| type           | ENUM                | IN, OUT, ADJUSTMENT, RETURN, LOSS                   |
+| quantity       | INT                 | sempre positivo; em ADJUSTMENT = saldo final        |
+| stock_before   | INT                 | saldo antes da movimentação                         |
+| stock_after    | INT                 | saldo depois (grava histórico auditável)            |
+| reason         | VARCHAR(160)        | motivo obrigatório                                  |
+| reference_type | VARCHAR(40) NULL    | 'order' \| 'manual' \| 'import'                     |
+| reference_id   | BIGINT UNSIGNED NULL| id do pedido quando reference_type = 'order'        |
+| created_by     | BIGINT UNSIGNED     | usuário responsável                                 |
+| created_at     | TIMESTAMP           | data/hora                                           |
+
+Linha de movimentação é imutável: correção se faz com nova movimentação,
+nunca UPDATE/DELETE. O saldo atual continua em `products.stock` e só muda
+dentro da transação que grava a movimentação (`SELECT ... FOR UPDATE`).
