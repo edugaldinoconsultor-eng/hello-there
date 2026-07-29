@@ -133,7 +133,7 @@ function PedidosPage() {
       key: "payment", header: "Pagamento",
       render: (o) => (
         <span className="text-muted-foreground">
-          {PAYMENT_CONDITION_LABEL[o.payment.condition]}
+          {paymentLabel(o)}
           {o.installments.length > 1 && ` · ${o.installments.length}x`}
         </span>
       ),
@@ -141,8 +141,8 @@ function PedidosPage() {
     {
       key: "status", header: "Status",
       render: (o) => (
-        <StatusBadge variant={ORDER_STATUS_BADGE[o.status]}>
-          {ORDER_STATUS_LABEL[o.status]}
+        <StatusBadge variant={statusBadge(o.status)}>
+          {statusLabel(o.status)}
         </StatusBadge>
       ),
     },
