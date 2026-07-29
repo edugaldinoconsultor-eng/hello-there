@@ -182,7 +182,7 @@ final class OrderController
                 ]);
             }
 
-            AuditLogger::log($user, 'ORDER_CREATED', 'order', $orderId, null, [
+            AuditLogger::log($user, 'ORDER_CREATED', 'order', (string) $orderId, null, [
                 'order_number' => $orderNumber,
                 'total' => Money::fromCents($totals['total_cents']),
             ]);
@@ -212,7 +212,7 @@ final class OrderController
             throw new HttpException(409, 'CONFLICT', 'Pedido já está cancelado.');
         }
         $repo->updateStatus($user->companyId, $order['id'], 'cancelled');
-        AuditLogger::log($user, 'ORDER_CANCELLED', 'order', $order['id'],
+        AuditLogger::log($user, 'ORDER_CANCELLED', 'order', (string) $order['id'],
             ['status' => $order['status']],
             ['status' => 'cancelled'],
         );
