@@ -238,7 +238,7 @@ final class OrderRepository
      * e completa snapshots + subtotal a partir da tabela products quando ausentes.
      * Cálculo: subtotal = (quantity * unit_price) - discount.
      */
-    public function insertItem(string $orderId, array $item): void
+    public function insertItem(int $orderId, array $item): void
     {
         $productId = (string) ($item['product_id'] ?? '');
         $quantity  = (int) ($item['quantity'] ?? 0);
