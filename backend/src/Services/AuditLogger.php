@@ -15,14 +15,28 @@ use SoulERP\Support\Uuid;
  */
 final class AuditLogger
 {
+    /**
+     * Assinatura canônica: log($user, $action, $entityType, $entityId, $old, $new).
+     * Também aceita a ordem legada log($action, $user, ...) para compatibilidade
+     * com deploys antigos que ainda chamem invertido.
+     */
     public static function log(
-        AuthenticatedUser $user,
-        string $action,
+        AuthenticatedUser|string $user,
+        AuthenticatedUser|string $action,
         string $entityType,
         string $entityId,
         ?array $oldValues = null,
         ?array $newValues = null,
     ): void {
+        if (is_string($user)) {
+            // Ordem legada: ($action, $user, ...)
+            [$user, $action] = [$action, $user];
+        }
+        if (!$user instanceof AuthenticatedUser || !is_string($action)) {
+            error_log('[SoulERP] Audit log skipped: argumentos inválidos.');
+            return;
+        }
+
         $ip = $_SERVER['REMOTE_ADDR'] ?? null;
         $ua = $_SERVER['HTTP_USER_AGENT'] ?? null;
         // audit_logs.id no banco real é BIGINT UNSIGNED AUTO_INCREMENT — não
