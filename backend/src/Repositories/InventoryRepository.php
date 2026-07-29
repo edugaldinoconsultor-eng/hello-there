@@ -11,6 +11,13 @@ use SoulERP\Http\HttpException;
 /**
  * Repositorio de estoque (saldos + kardex).
  *
+ * Estrutura REAL da tabela inventory_movements:
+ *   id, company_id, product_id, type ENUM('IN','OUT','ADJUSTMENT','RETURN','TRANSFER'),
+ *   quantity DECIMAL(14,3), reference_type, reference_id, notes, created_by, created_at
+ *
+ * Nao existem colunas stock_before / stock_after / reason.
+ * O motivo da movimentacao e gravado em `notes`.
+ *
  * Estilo conservador validado no servidor da Hostinger:
  *  - sem named arguments
  *  - sem trailing comma em parametros
@@ -20,10 +27,12 @@ use SoulERP\Http\HttpException;
  */
 final class InventoryRepository
 {
+    /** Tipos aceitos pelo ENUM da tabela. */
+    private const TYPES = array('IN', 'OUT', 'ADJUSTMENT', 'RETURN', 'TRANSFER');
     /** Tipos que somam ao saldo. */
     private const POSITIVE = array('IN', 'RETURN');
     /** Tipos que subtraem do saldo. */
-    private const NEGATIVE = array('OUT', 'LOSS');
+    private const NEGATIVE = array('OUT', 'TRANSFER');
 
     /**
      * Saldos por produto. Le direto de products (fonte do saldo atual).
@@ -69,6 +78,8 @@ final class InventoryRepository
     /**
      * Historico de movimentacoes da empresa, com nome do produto e do usuario.
      *
+     * `notes` e devolvido tambem como `reason` para nao quebrar o frontend.
+     *
      * @return array<int,array<string,mixed>>
      */
     public function listMovements(string $companyId, ?int $productId, ?string $type, int $page, int $pageSize): array
@@ -83,12 +94,13 @@ final class InventoryRepository
         if ($productId !== null && $productId > 0) {
             $where .= ' AND m.product_id = :pid';
         }
-        if ($type !== null && $type !== '' && in_array($type, array('IN', 'OUT', 'ADJUSTMENT', 'RETURN', 'LOSS'), true)) {
+        if ($type !== null && $type !== '' && in_array($type, self::TYPES, true)) {
             $where .= ' AND m.type = :type';
             $params[':type'] = $type;
         }
 
         $sql = 'SELECT m.*,
+                       m.notes AS reason,
                        p.name AS product_name,
                        p.sku  AS product_sku,
                        u.name AS user_name,
@@ -126,10 +138,18 @@ final class InventoryRepository
         $productId = (int) $data['product_id'];
         $type = (string) $data['type'];
         $quantity = (int) $data['quantity'];
-        $reason = (string) $data['reason'];
+        $notes = '';
+        if (isset($data['notes']) && $data['notes'] !== null && $data['notes'] !== '') {
+            $notes = (string) $data['notes'];
+        } elseif (isset($data['reason']) && $data['reason'] !== null) {
+            $notes = (string) $data['reason'];
+        }
         $referenceType = isset($data['reference_type']) && $data['reference_type'] !== null ? (string) $data['reference_type'] : null;
         $referenceId = isset($data['reference_id']) && $data['reference_id'] !== null ? (int) $data['reference_id'] : null;
 
+        if (!in_array($type, self::TYPES, true)) {
+            throw new HttpException(422, 'VALIDATION_ERROR', 'Tipo de movimentacao invalido.');
+        }
         if ($quantity < 0) {
             throw new HttpException(422, 'VALIDATION_ERROR', 'Quantidade nao pode ser negativa.');
         }
@@ -168,12 +188,9 @@ final class InventoryRepository
                 $after = $before + $quantity;
             } elseif (in_array($type, self::NEGATIVE, true)) {
                 $after = $before - $quantity;
-            } elseif ($type === 'ADJUSTMENT') {
-                // Em ajuste, quantity representa o saldo final desejado.
-                $after = $quantity;
             } else {
-                $pdo->rollBack();
-                throw new HttpException(422, 'VALIDATION_ERROR', 'Tipo de movimentacao invalido.');
+                // ADJUSTMENT: quantity representa o saldo final desejado.
+                $after = $quantity;
             }
 
             if ($after < 0) {
@@ -193,19 +210,16 @@ final class InventoryRepository
 
             $ins = $pdo->prepare(
                 'INSERT INTO inventory_movements
-                    (company_id, product_id, type, quantity, stock_before, stock_after,
-                     reason, reference_type, reference_id, created_by, created_at)
+                    (company_id, product_id, type, quantity,
+                     reference_type, reference_id, notes, created_by, created_at)
                  VALUES
-                    (:company_id, :product_id, :type, :quantity, :stock_before, :stock_after,
-                     :reason, :reference_type, :reference_id, :created_by, NOW())'
+                    (:company_id, :product_id, :type, :quantity,
+                     :reference_type, :reference_id, :notes, :created_by, NOW())'
             );
             $ins->bindValue(':company_id', $companyId);
             $ins->bindValue(':product_id', $productId, PDO::PARAM_INT);
             $ins->bindValue(':type', $type);
             $ins->bindValue(':quantity', $quantity, PDO::PARAM_INT);
-            $ins->bindValue(':stock_before', $before, PDO::PARAM_INT);
-            $ins->bindValue(':stock_after', $after, PDO::PARAM_INT);
-            $ins->bindValue(':reason', $reason);
             if ($referenceType === null) {
                 $ins->bindValue(':reference_type', null, PDO::PARAM_NULL);
             } else {
@@ -215,6 +229,11 @@ final class InventoryRepository
                 $ins->bindValue(':reference_id', null, PDO::PARAM_NULL);
             } else {
                 $ins->bindValue(':reference_id', $referenceId, PDO::PARAM_INT);
+            }
+            if ($notes === '') {
+                $ins->bindValue(':notes', null, PDO::PARAM_NULL);
+            } else {
+                $ins->bindValue(':notes', $notes);
             }
             $ins->bindValue(':created_by', $userId);
             $ins->execute();
@@ -232,7 +251,8 @@ final class InventoryRepository
                 'quantity'       => $quantity,
                 'stock_before'   => $before,
                 'stock_after'    => $after,
-                'reason'         => $reason,
+                'notes'          => $notes,
+                'reason'         => $notes,
                 'reference_type' => $referenceType,
                 'reference_id'   => $referenceId,
                 'created_by'     => $userId,
