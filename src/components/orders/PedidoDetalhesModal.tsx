@@ -1,6 +1,7 @@
 /**
  * Modal read-only com detalhes de um pedido existente.
  */
+import { FileText } from "lucide-react";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
@@ -15,11 +16,12 @@ import {
 import { useCustomers } from "@/services/customers.service";
 
 export function PedidoDetalhesModal({
-  order, open, onOpenChange,
+  order, open, onOpenChange, onGerarOrcamento,
 }: {
   order?: Order;
   open: boolean;
   onOpenChange: (v: boolean) => void;
+  onGerarOrcamento?: () => void;
 }) {
   const { customers } = useCustomers();
   const customer = order ? customers.find((c) => c.id === order.customerId) : undefined;
@@ -159,8 +161,13 @@ export function PedidoDetalhesModal({
           )}
         </div>
 
-        <DialogFooter className="border-t border-border px-6 py-3">
+        <DialogFooter className="gap-2 border-t border-border px-6 py-3">
           <Button variant="outline" onClick={() => onOpenChange(false)}>Fechar</Button>
+          {onGerarOrcamento && (
+            <Button className="gap-1.5" onClick={onGerarOrcamento}>
+              <FileText className="h-4 w-4" /> Gerar orçamento
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Plus, ShoppingCart, Eye, Ban } from "lucide-react";
+import { Plus, ShoppingCart, Eye, Ban, FileText } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ import { DataTable, type Column } from "@/components/shared/DataTable";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { NovoPedidoModal } from "@/components/orders/NovoPedidoModal";
 import { PedidoDetalhesModal } from "@/components/orders/PedidoDetalhesModal";
+import { OrcamentoModal } from "@/components/orders/OrcamentoModal";
 import { useOrders } from "@/services/orders.service";
 import { useCustomers } from "@/services/customers.service";
 import { MOCK_SALESPEOPLE } from "@/lib/customer-schema";
@@ -46,6 +47,7 @@ function PedidosPage() {
 
   const [novoOpen, setNovoOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [orcamentoOpen, setOrcamentoOpen] = useState(false);
   const [selected, setSelected] = useState<Order | undefined>();
 
   const [from, setFrom] = useState("");
@@ -155,6 +157,12 @@ function PedidosPage() {
             onClick={() => { setSelected(o); setDetailsOpen(true); }}
           >
             <Eye className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost" size="icon" aria-label="Gerar orçamento"
+            onClick={() => { setSelected(o); setOrcamentoOpen(true); }}
+          >
+            <FileText className="h-4 w-4" />
           </Button>
           {o.status !== "cancelled" && hasPermission(user, "orders.cancel") && (
             <Button
@@ -266,6 +274,10 @@ function PedidosPage() {
         <NovoPedidoModal open={novoOpen} onOpenChange={setNovoOpen} />
         <PedidoDetalhesModal
           open={detailsOpen} onOpenChange={setDetailsOpen} order={selected}
+          onGerarOrcamento={() => { setDetailsOpen(false); setOrcamentoOpen(true); }}
+        />
+        <OrcamentoModal
+          open={orcamentoOpen} onOpenChange={setOrcamentoOpen} order={selected}
         />
       </div>
     </RequirePermission>
