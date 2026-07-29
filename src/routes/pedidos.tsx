@@ -22,7 +22,7 @@ import {
 import { useUIEvent } from "@/lib/ui-events";
 import { RequirePermission, Can } from "@/components/auth/RequirePermission";
 import { useSession } from "@/mocks/session";
-import { assertPermission, canAccessOrder, canCancelOrder, hasPermission } from "@/lib/permissions";
+import { assertPermission, hasPermission } from "@/lib/permissions";
 
 
 export const Route = createFileRoute("/pedidos")({
@@ -58,11 +58,12 @@ function PedidosPage() {
     if (canCreate) setNovoOpen(true);
   });
 
-  // Escopo por perfil: seller só enxerga os próprios pedidos.
-  const scoped = useMemo(
-    () => orders.filter((o) => canAccessOrder(user, o)),
-    [orders, user],
-  );
+  // O backend (GET /api/v1/orders) JÁ restringe por company_id da sessão e,
+  // quando o perfil não tem `orders.view.all`, por seller_id. Reaplicar o
+  // filtro em memória aqui escondia todos os pedidos sempre que o formato do
+  // ID vindo do MySQL ("1") diferia do ID da sessão. Confiamos no servidor.
+  const scoped = orders;
+
 
   const filtered = useMemo(() => {
     return scoped.filter((o) => {
@@ -80,7 +81,7 @@ function PedidosPage() {
 
   const handleCancel = async (o: Order) => {
     assertPermission(user, "orders.cancel");
-    if (!canCancelOrder(user, o)) return;
+    if (o.status === "cancelled") return;
     try {
       await updateStatus(o.id, "cancelled");
     } catch {
@@ -129,7 +130,7 @@ function PedidosPage() {
           >
             <Eye className="h-4 w-4" />
           </Button>
-          {canCancelOrder(user, o) && (
+          {o.status !== "cancelled" && hasPermission(user, "orders.cancel") && (
             <Button
               variant="ghost" size="icon" aria-label="Cancelar pedido"
               onClick={() => handleCancel(o)}
