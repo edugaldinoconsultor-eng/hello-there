@@ -21,17 +21,26 @@ return [
 
     // Origens (domínios do frontend) autorizadas a chamar a API.
     // NUNCA use '*' — cookies HttpOnly exigem origin explícito.
+    // Estas origens do Lovable já estão embutidas como padrão no
+    // Middleware/Cors.php, mas podem ser repetidas aqui sem problema:
+    //   https://id-preview--d864102f-80f4-4268-87ac-bda274124536.lovable.app
+    //   https://mellow-mutual-mix.lovable.app
+    //   http://localhost:8080
     'allowed_origins' => [
+        'https://id-preview--d864102f-80f4-4268-87ac-bda274124536.lovable.app',
+        'https://mellow-mutual-mix.lovable.app',
+        'http://localhost:8080',
         // 'https://app.infodanutri.com.br',
-        // 'http://localhost:8080',
     ],
 
     // Cookie de sessão HttpOnly.
     'session' => [
         'cookie_name'      => 'soulerp_sid',
+        // OBRIGATÓRIO em cross-site (frontend .lovable.app + API .infodanutri.com.br):
+        // SameSite=None exige Secure=true, e ambos exigem HTTPS.
         'cookie_secure'    => true,   // exige HTTPS em produção
         'cookie_http_only' => true,   // (informativo — o backend sempre força HttpOnly)
-        'cookie_samesite'  => 'Lax',  // Lax permite navegação normal cross-subdomínio
+        'cookie_samesite'  => 'None', // 'None' = cookie enviado em requisições cross-site
         'lifetime_seconds' => 60 * 60 * 8, // 8 horas
     ],
 
