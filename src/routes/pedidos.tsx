@@ -130,7 +130,7 @@ function PedidosPage() {
           >
             <Eye className="h-4 w-4" />
           </Button>
-          {canCancelOrder(user, o) && (
+          {o.status !== "cancelled" && hasPermission(user, "orders.cancel") && (
             <Button
               variant="ghost" size="icon" aria-label="Cancelar pedido"
               onClick={() => handleCancel(o)}
