@@ -77,7 +77,33 @@ function PedidosPage() {
   }, [scoped, from, to, customerFilter, sellerFilter, statusFilter]);
 
   const customerName = (id: string) =>
-    customers.find((c) => c.id === id)?.legalName ?? "—";
+    customers.find((c) => String(c.id) === String(id))?.legalName ?? "—";
+
+  // O backend pode devolver valores fora dos enums do frontend
+  // (ex.: payment_condition "30_dias", sale_type ""). Nunca renderizamos
+  // célula vazia por causa disso — caímos num rótulo legível.
+  const EXTRA_PAYMENT_LABEL: Record<string, string> = {
+    "30_dias": "30 dias",
+    "30_60": "30/60 dias",
+    "30_60_90": "30/60/90 dias",
+    balcao: "Balcão",
+    faturado: "Faturado",
+  };
+
+  const paymentLabel = (o: Order) => {
+    const raw = String(o.payment?.condition ?? "");
+    if (!raw) return "—";
+    return (
+      PAYMENT_CONDITION_LABEL[o.payment.condition] ??
+      EXTRA_PAYMENT_LABEL[raw] ??
+      raw.replace(/_/g, " ")
+    );
+  };
+
+  const statusLabel = (s: OrderStatus) =>
+    ORDER_STATUS_LABEL[s] ?? String(s ?? "—");
+  const statusBadge = (s: OrderStatus) => ORDER_STATUS_BADGE[s] ?? "neutral";
+
 
   const handleCancel = async (o: Order) => {
     assertPermission(user, "orders.cancel");
@@ -107,7 +133,7 @@ function PedidosPage() {
       key: "payment", header: "Pagamento",
       render: (o) => (
         <span className="text-muted-foreground">
-          {PAYMENT_CONDITION_LABEL[o.payment.condition]}
+          {paymentLabel(o)}
           {o.installments.length > 1 && ` · ${o.installments.length}x`}
         </span>
       ),
@@ -115,8 +141,8 @@ function PedidosPage() {
     {
       key: "status", header: "Status",
       render: (o) => (
-        <StatusBadge variant={ORDER_STATUS_BADGE[o.status]}>
-          {ORDER_STATUS_LABEL[o.status]}
+        <StatusBadge variant={statusBadge(o.status)}>
+          {statusLabel(o.status)}
         </StatusBadge>
       ),
     },
