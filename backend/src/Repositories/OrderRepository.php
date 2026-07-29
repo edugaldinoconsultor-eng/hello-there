@@ -156,7 +156,7 @@ final class OrderRepository
         ?string $onlySellerId,
         ?string $status,
         int $page = 1,
-        int $pageSize = 25,
+        int $pageSize = 25
     ): array {
         $offset = max(0, ($page - 1) * $pageSize);
         $where = 'company_id = :cid';
