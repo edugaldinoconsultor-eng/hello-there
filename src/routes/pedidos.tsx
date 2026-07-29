@@ -265,9 +265,47 @@ function PedidosPage() {
               </div>
             </section>
 
-            <section className="rounded-lg border border-border bg-card">
+            {/* Mobile: cards com ações visíveis */}
+            <section className="space-y-2 md:hidden">
+              {filtered.map((o) => (
+                <div key={o.id} className="rounded-lg border border-border bg-card p-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <div className="text-sm font-medium text-foreground">{o.orderNumber}</div>
+                      <div className="text-xs text-muted-foreground">{customerName(o.customerId)}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {formatDateBR(o.orderDate)} · {formatBRL(o.total)}
+                      </div>
+                    </div>
+                    <StatusBadge variant={statusBadge(o.status)}>{statusLabel(o.status)}</StatusBadge>
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <Button
+                      size="sm" variant="outline" className="gap-1.5"
+                      onClick={() => { setSelected(o); setDetailsOpen(true); }}
+                    >
+                      <Eye className="h-3.5 w-3.5" /> Ver
+                    </Button>
+                    <Button
+                      size="sm" className="gap-1.5"
+                      onClick={() => { setSelected(o); setOrcamentoOpen(true); }}
+                    >
+                      <FileText className="h-3.5 w-3.5" /> Gerar orçamento
+                    </Button>
+                    {o.status !== "cancelled" && hasPermission(user, "orders.cancel") && (
+                      <Button size="sm" variant="ghost" className="gap-1.5" onClick={() => handleCancel(o)}>
+                        <Ban className="h-3.5 w-3.5" /> Cancelar
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </section>
+
+            <section className="hidden rounded-lg border border-border bg-card md:block">
               <DataTable columns={columns} data={filtered} />
             </section>
+
           </>
         )}
 
