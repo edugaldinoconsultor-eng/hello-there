@@ -73,6 +73,23 @@ final class Cors
 
         $normalized = rtrim($origin, '/');
 
-        return in_array($normalized, $allowed, true);
+        if (in_array($normalized, $allowed, true)) {
+            return true;
+        }
+
+        // Sufixos confiaveis, apenas sobre HTTPS.
+        if (strpos($normalized, 'https://') === 0) {
+            $host = substr($normalized, strlen('https://'));
+            if (strpos($host, '/') === false) {
+                foreach (self::TRUSTED_SUFFIXES as $suffix) {
+                    $len = strlen($suffix);
+                    if (strlen($host) > $len && substr($host, -$len) === $suffix) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
     }
 }
