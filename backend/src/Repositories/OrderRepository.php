@@ -150,6 +150,10 @@ final class OrderRepository
     /**
      * Lista com filtro por vendedor quando o usuário não tem orders.view.all.
      * A regra vem do controller — o repo só aplica o filtro que receber.
+     *
+     * Comparações usam CAST(... AS CHAR) porque as colunas migraram de CHAR(36)
+     * para BIGINT UNSIGNED em produção: comparar BIGINT com string vinda da
+     * sessão podia derrubar o índice/collation e devolver 0 linhas.
      */
     public function listByCompany(
         string $companyId,
@@ -158,25 +162,92 @@ final class OrderRepository
         int $page = 1,
         int $pageSize = 25
     ): array {
-        $offset = max(0, ($page - 1) * $pageSize);
-        $where = 'company_id = :cid';
-        $params = [':cid' => $companyId];
-        if ($onlySellerId !== null) {
-            $where .= ' AND seller_id = :sid';
-            $params[':sid'] = $onlySellerId;
+        $page = $page > 0 ? $page : 1;
+        $pageSize = $pageSize > 0 ? min(200, $pageSize) : 25;
+        $offset = ($page - 1) * $pageSize;
+
+        $where = 'CAST(o.company_id AS CHAR) = :cid';
+        $params = [':cid' => trim($companyId)];
+
+        if ($onlySellerId !== null && trim($onlySellerId) !== '') {
+            $where .= ' AND CAST(o.seller_id AS CHAR) = :sid';
+            $params[':sid'] = trim($onlySellerId);
         }
-        if ($status !== null && $status !== '') {
-            $where .= ' AND status = :st';
-            $params[':st'] = $status;
+
+        // "", "all" e "todos" significam "sem filtro" — antes qualquer um deles
+        // virava `status = ''` e zerava a listagem.
+        $normalizedStatus = $status === null ? '' : strtolower(trim($status));
+        if ($normalizedStatus !== '' && $normalizedStatus !== 'all' && $normalizedStatus !== 'todos') {
+            $where .= ' AND o.status = :st';
+            $params[':st'] = $normalizedStatus;
         }
-        $sql = "SELECT * FROM orders WHERE {$where} ORDER BY order_date DESC, created_at DESC LIMIT :lim OFFSET :off";
+
+        $sql = "SELECT o.* FROM orders o
+                 WHERE {$where}
+                 ORDER BY o.id DESC
+                 LIMIT :lim OFFSET :off";
+
         $stmt = Connection::pdo()->prepare($sql);
-        foreach ($params as $k => $v) $stmt->bindValue($k, $v);
+        foreach ($params as $k => $v) {
+            $stmt->bindValue($k, $v, \PDO::PARAM_STR);
+        }
         $stmt->bindValue(':lim', $pageSize, \PDO::PARAM_INT);
         $stmt->bindValue(':off', $offset, \PDO::PARAM_INT);
         $stmt->execute();
-        return $stmt->fetchAll();
+        $rows = $stmt->fetchAll();
+
+        if ($rows === []) {
+            $this->logEmptyListDiagnostics($companyId, $onlySellerId, $normalizedStatus, $sql, $params);
+        }
+
+        return $rows;
     }
+
+    /**
+     * Só roda quando a listagem volta vazia: mostra no error_log onde o filtro
+     * derrubou as linhas (empresa, vendedor ou status).
+     */
+    private function logEmptyListDiagnostics(
+        string $companyId,
+        ?string $onlySellerId,
+        string $status,
+        string $sql,
+        array $params
+    ): void {
+        try {
+            $pdo = Connection::pdo();
+
+            $totalStmt = $pdo->query('SELECT COUNT(*) AS c FROM orders');
+            $total = (int) ($totalStmt->fetch()['c'] ?? 0);
+
+            $companyStmt = $pdo->prepare(
+                'SELECT COUNT(*) AS c FROM orders WHERE CAST(company_id AS CHAR) = :cid'
+            );
+            $companyStmt->execute([':cid' => trim($companyId)]);
+            $byCompany = (int) ($companyStmt->fetch()['c'] ?? 0);
+
+            $sampleStmt = $pdo->query(
+                'SELECT id, order_number, company_id, seller_id, status, order_date
+                   FROM orders ORDER BY id DESC LIMIT 5'
+            );
+
+            error_log('[ORDER LIST EMPTY] ' . json_encode([
+                'sql' => $sql,
+                'params' => $params,
+                'filters' => [
+                    'company_id' => $companyId,
+                    'only_seller_id' => $onlySellerId,
+                    'status' => $status,
+                ],
+                'orders_total' => $total,
+                'orders_da_empresa' => $byCompany,
+                'ultimos_pedidos' => $sampleStmt->fetchAll(),
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PARTIAL_OUTPUT_ON_ERROR));
+        } catch (\Throwable $e) {
+            error_log('[ORDER LIST EMPTY] diagnóstico falhou: ' . $e->getMessage());
+        }
+    }
+
 
     public function findById(string $companyId, string $id): ?array
     {
