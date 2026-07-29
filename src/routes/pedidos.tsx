@@ -58,11 +58,12 @@ function PedidosPage() {
     if (canCreate) setNovoOpen(true);
   });
 
-  // Escopo por perfil: seller só enxerga os próprios pedidos.
-  const scoped = useMemo(
-    () => orders.filter((o) => canAccessOrder(user, o)),
-    [orders, user],
-  );
+  // O backend (GET /api/v1/orders) JÁ restringe por company_id da sessão e,
+  // quando o perfil não tem `orders.view.all`, por seller_id. Reaplicar o
+  // filtro em memória aqui escondia todos os pedidos sempre que o formato do
+  // ID vindo do MySQL ("1") diferia do ID da sessão. Confiamos no servidor.
+  const scoped = orders;
+
 
   const filtered = useMemo(() => {
     return scoped.filter((o) => {
