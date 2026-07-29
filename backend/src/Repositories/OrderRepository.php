@@ -121,7 +121,9 @@ final class OrderRepository
             $this->logDiagnosticRows(
                 'foreign_key_incompatibilities',
                 $failedTable,
-                array_values(array_filter($fkRows, static fn(array $row): bool => ($row['compatibility_status'] ?? null) !== 'OK')),
+                array_values(array_filter($fkRows, function (array $row): bool {
+                    return ($row['compatibility_status'] ?? null) !== 'OK';
+                }))
             );
         } catch (\Throwable $diagnosticError) {
             $encoded = json_encode([
@@ -154,7 +156,7 @@ final class OrderRepository
         ?string $onlySellerId,
         ?string $status,
         int $page = 1,
-        int $pageSize = 25,
+        int $pageSize = 25
     ): array {
         $offset = max(0, ($page - 1) * $pageSize);
         $where = 'company_id = :cid';
