@@ -121,7 +121,9 @@ final class OrderRepository
             $this->logDiagnosticRows(
                 'foreign_key_incompatibilities',
                 $failedTable,
-                array_values(array_filter($fkRows, static fn(array $row): bool => ($row['compatibility_status'] ?? null) !== 'OK')),
+                array_values(array_filter($fkRows, function (array $row): bool {
+                    return ($row['compatibility_status'] ?? null) !== 'OK';
+                }))
             );
         } catch (\Throwable $diagnosticError) {
             $encoded = json_encode([
