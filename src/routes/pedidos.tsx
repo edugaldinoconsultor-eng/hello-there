@@ -81,7 +81,7 @@ function PedidosPage() {
 
   const handleCancel = async (o: Order) => {
     assertPermission(user, "orders.cancel");
-    if (!canCancelOrder(user, o)) return;
+    if (o.status === "cancelled") return;
     try {
       await updateStatus(o.id, "cancelled");
     } catch {
