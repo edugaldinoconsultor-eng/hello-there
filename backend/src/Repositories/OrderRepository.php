@@ -252,9 +252,11 @@ final class OrderRepository
     public function findById(string $companyId, string $id): ?array
     {
         $stmt = Connection::pdo()->prepare(
-            'SELECT * FROM orders WHERE id = :id AND company_id = :cid LIMIT 1'
+            'SELECT * FROM orders
+              WHERE CAST(id AS CHAR) = :id AND CAST(company_id AS CHAR) = :cid
+              LIMIT 1'
         );
-        $stmt->execute([':id' => $id, ':cid' => $companyId]);
+        $stmt->execute([':id' => trim($id), ':cid' => trim($companyId)]);
         $row = $stmt->fetch();
         return $row === false ? null : $row;
     }
