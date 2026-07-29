@@ -12,6 +12,7 @@ use SoulERP\Controllers\AuthController;
 use SoulERP\Controllers\BootstrapController;
 use SoulERP\Controllers\CustomerController;
 use SoulERP\Controllers\HealthController;
+use SoulERP\Controllers\InventoryController;
 use SoulERP\Controllers\OrderController;
 use SoulERP\Controllers\ProductController;
 use SoulERP\Http\Router;
