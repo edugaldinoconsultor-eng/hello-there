@@ -93,7 +93,7 @@ customer_id        BIGINT UNSIGNED NOT NULL
 order_id           BIGINT UNSIGNED NULL      -- origem, quando vier de pedido
 installment_id     BIGINT UNSIGNED NULL      -- parcela de origem
 parent_id          BIGINT UNSIGNED NULL      -- renegociação
-document_number    VARCHAR(30) NULL          -- nº do título / duplicata
+
 description        VARCHAR(180) NOT NULL
 due_date           DATE NOT NULL
 issue_date         DATE NOT NULL
@@ -114,8 +114,9 @@ INDEX (company_id, status), INDEX (company_id, order_id)
 id              BIGINT UNSIGNED AUTO_INCREMENT PK
 company_id      BIGINT UNSIGNED NOT NULL
 supplier_name   VARCHAR(160) NOT NULL     -- fornecedor textual nesta etapa
-category_id     BIGINT UNSIGNED NULL
+category        VARCHAR(80) NULL          -- texto livre; tabela de categorias só na etapa 2
 description     VARCHAR(180) NOT NULL
+
 due_date        DATE NOT NULL
 issue_date      DATE NOT NULL
 amount          DECIMAL(14,2) NOT NULL
@@ -144,22 +145,17 @@ created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 INDEX (company_id, entry_type, entry_id), INDEX (company_id, paid_at)
 ```
 
-### 4.4 `financial_categories` (plano de contas simples)
+### 4.4 Tabelas descartadas nesta etapa
 
-```text
-id          BIGINT UNSIGNED AUTO_INCREMENT PK
-company_id  BIGINT UNSIGNED NOT NULL
-name        VARCHAR(80) NOT NULL
-kind        ENUM('income','expense') NOT NULL
-active      TINYINT(1) NOT NULL DEFAULT 1
-created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-UNIQUE KEY (company_id, name, kind)
-```
+- `financial_categories` — o backend da etapa 1 não lê nem escreve nela.
+  Enquanto não houver CRUD de plano de contas, `accounts_payable.category`
+  resolve como texto. Entra na migration 007 se necessário.
 
-Sem FKs cruzadas com `orders`/`customers` na primeira migration: o histórico
-do projeto mostra que FK em tabela legada com engine/tipo divergente gera
-erro 1467/1215. A integridade é garantida no repositório (checagem por
-`company_id` + `SELECT` prévio), como já foi feito no Estoque.
+Sem FKs cruzadas com `orders`/`customers`/`companies`/`users` na primeira
+migration: o histórico do projeto mostra que FK em tabela legada com engine ou
+tipo divergente gera erro 1467/1215. A integridade é garantida no repositório
+(checagem por `company_id` + `SELECT` prévio), como já foi feito no Estoque.
+
 
 ---
 
@@ -172,9 +168,9 @@ Reaproveita a matriz existente (`backend/src/Auth/Permissions.php` +
 |------|-----------|--------|
 | Ver títulos, listas e totais | `finance.view` | owner, admin, finance |
 | Ver margem/custo/saldo devedor consolidado | `finance.view.sensitive` | owner, admin, finance |
-| Criar título, baixar, estornar, cancelar | `finance.manage` *(nova, a incluir)* | owner, admin, finance |
+| Criar título, baixar, estornar, cancelar | `finance.receivables.manage` *(nova, a incluir)* | owner, admin, finance |
 
-`finance.manage` é a única adição à matriz — necessária porque hoje `finance`
+`finance.receivables.manage` é a única adição à matriz — necessária porque hoje `finance`
 só tem permissões de leitura. Frontend esconde botão; o **backend autoriza de
 fato** com `Permissions::require`.
 
@@ -211,16 +207,15 @@ não são reescritos.
 | GET | `/finance/summary` | `finance.view` |
 | GET | `/finance/receivables` | `finance.view` |
 | GET | `/finance/receivables/{id}` | `finance.view` |
-| POST | `/finance/receivables` | `finance.manage` |
-| POST | `/finance/receivables/from-order/{orderId}` | `finance.manage` |
-| POST | `/finance/receivables/{id}/payments` | `finance.manage` |
-| POST | `/finance/receivables/{id}/cancel` | `finance.manage` |
-| POST | `/finance/receivables/{id}/renegotiate` | `finance.manage` |
+| POST | `/finance/receivables` | `finance.receivables.manage` |
+| POST | `/finance/receivables/from-order/{orderId}` | `finance.receivables.manage` |
+| POST | `/finance/receivables/{id}/payments` | `finance.receivables.manage` |
+| POST | `/finance/receivables/{id}/cancel` | `finance.receivables.manage` |
+| POST | `/finance/receivables/{id}/renegotiate` | `finance.receivables.manage` |
 | GET | `/finance/payables` | `finance.view` |
-| POST | `/finance/payables` | `finance.manage` |
-| POST | `/finance/payables/{id}/payments` | `finance.manage` |
+| POST | `/finance/payables` | `finance.receivables.manage` |
+| POST | `/finance/payables/{id}/payments` | `finance.receivables.manage` |
 | GET | `/finance/cashflow` | `finance.view` |
-| GET | `/finance/categories` | `finance.view` |
 
 Filtros de listagem: `status`, `from`, `to`, `customer_id`, `q`, `overdue=1`,
 `page`, `page_size`. Paginação no mesmo formato já usado em Pedidos.
