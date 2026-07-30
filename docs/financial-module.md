@@ -145,22 +145,17 @@ created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 INDEX (company_id, entry_type, entry_id), INDEX (company_id, paid_at)
 ```
 
-### 4.4 `financial_categories` (plano de contas simples)
+### 4.4 Tabelas descartadas nesta etapa
 
-```text
-id          BIGINT UNSIGNED AUTO_INCREMENT PK
-company_id  BIGINT UNSIGNED NOT NULL
-name        VARCHAR(80) NOT NULL
-kind        ENUM('income','expense') NOT NULL
-active      TINYINT(1) NOT NULL DEFAULT 1
-created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-UNIQUE KEY (company_id, name, kind)
-```
+- `financial_categories` — o backend da etapa 1 não lê nem escreve nela.
+  Enquanto não houver CRUD de plano de contas, `accounts_payable.category`
+  resolve como texto. Entra na migration 007 se necessário.
 
-Sem FKs cruzadas com `orders`/`customers` na primeira migration: o histórico
-do projeto mostra que FK em tabela legada com engine/tipo divergente gera
-erro 1467/1215. A integridade é garantida no repositório (checagem por
-`company_id` + `SELECT` prévio), como já foi feito no Estoque.
+Sem FKs cruzadas com `orders`/`customers`/`companies`/`users` na primeira
+migration: o histórico do projeto mostra que FK em tabela legada com engine ou
+tipo divergente gera erro 1467/1215. A integridade é garantida no repositório
+(checagem por `company_id` + `SELECT` prévio), como já foi feito no Estoque.
+
 
 ---
 
