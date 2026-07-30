@@ -114,7 +114,8 @@ INDEX (company_id, status), INDEX (company_id, order_id)
 id              BIGINT UNSIGNED AUTO_INCREMENT PK
 company_id      BIGINT UNSIGNED NOT NULL
 supplier_name   VARCHAR(160) NOT NULL     -- fornecedor textual nesta etapa
-category_id     BIGINT UNSIGNED NULL
+category        VARCHAR(80) NULL          -- texto livre; tabela de categorias só na etapa 2
+
 description     VARCHAR(180) NOT NULL
 due_date        DATE NOT NULL
 issue_date      DATE NOT NULL
