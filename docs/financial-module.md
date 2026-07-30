@@ -115,8 +115,8 @@ id              BIGINT UNSIGNED AUTO_INCREMENT PK
 company_id      BIGINT UNSIGNED NOT NULL
 supplier_name   VARCHAR(160) NOT NULL     -- fornecedor textual nesta etapa
 category        VARCHAR(80) NULL          -- texto livre; tabela de categorias só na etapa 2
-
 description     VARCHAR(180) NOT NULL
+
 due_date        DATE NOT NULL
 issue_date      DATE NOT NULL
 amount          DECIMAL(14,2) NOT NULL
