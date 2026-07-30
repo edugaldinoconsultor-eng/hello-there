@@ -11,6 +11,7 @@ declare(strict_types=1);
 use SoulERP\Controllers\AuthController;
 use SoulERP\Controllers\BootstrapController;
 use SoulERP\Controllers\CustomerController;
+use SoulERP\Controllers\FinancialController;
 use SoulERP\Controllers\HealthController;
 use SoulERP\Controllers\InventoryController;
 use SoulERP\Controllers\OrderController;
@@ -54,4 +55,17 @@ return static function (Router $r): void {
     $r->get ("{$prefix}/inventory/movements",                [InventoryController::class, 'movements']);
     $r->get ("{$prefix}/inventory/products/{id}/movements",  [InventoryController::class, 'movementsByProduct']);
     $r->post("{$prefix}/inventory/movements",                [InventoryController::class, 'createMovement']);
+
+    // Financeiro — leitura: finance.view | escrita: finance.manage
+    $r->get ("{$prefix}/financial/summary",                   [FinancialController::class, 'summary']);
+    $r->get ("{$prefix}/financial/receivables",               [FinancialController::class, 'receivables']);
+    $r->get ("{$prefix}/financial/receivables/{id}",          [FinancialController::class, 'showReceivable']);
+    $r->post("{$prefix}/financial/receivables",               [FinancialController::class, 'createReceivable']);
+    $r->post("{$prefix}/financial/receivables/{id}/payments", [FinancialController::class, 'payReceivable']);
+    $r->get ("{$prefix}/financial/payables",                  [FinancialController::class, 'payables']);
+    $r->get ("{$prefix}/financial/payables/{id}",             [FinancialController::class, 'showPayable']);
+    $r->post("{$prefix}/financial/payables",                  [FinancialController::class, 'createPayable']);
+    $r->post("{$prefix}/financial/payables/{id}/payments",    [FinancialController::class, 'payPayable']);
+    $r->get ("{$prefix}/financial/payments",                  [FinancialController::class, 'payments']);
+    $r->post("{$prefix}/financial/payments",                  [FinancialController::class, 'createPayment']);
 };

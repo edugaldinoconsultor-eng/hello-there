@@ -20,7 +20,7 @@ final class Permissions
             'products.view', 'products.edit', 'products.price.edit',
             'orders.view', 'orders.view.all', 'orders.create', 'orders.edit', 'orders.cancel',
             'stock.view', 'stock.adjust',
-            'finance.view', 'finance.view.sensitive',
+            'finance.view', 'finance.view.sensitive', 'finance.manage',
             'users.manage', 'company.manage',
         ],
         'admin' => [
@@ -28,7 +28,7 @@ final class Permissions
             'products.view', 'products.edit', 'products.price.edit',
             'orders.view', 'orders.view.all', 'orders.create', 'orders.edit', 'orders.cancel',
             'stock.view', 'stock.adjust',
-            'finance.view', 'finance.view.sensitive',
+            'finance.view', 'finance.view.sensitive', 'finance.manage',
             'users.manage',
         ],
         'manager' => [
@@ -46,7 +46,7 @@ final class Permissions
             'customers.view',
             'products.view',
             'orders.view', 'orders.view.all',
-            'finance.view', 'finance.view.sensitive',
+            'finance.view', 'finance.view.sensitive', 'finance.manage',
         ],
         'stock' => [
             'products.view',
