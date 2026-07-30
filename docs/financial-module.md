@@ -93,7 +93,7 @@ customer_id        BIGINT UNSIGNED NOT NULL
 order_id           BIGINT UNSIGNED NULL      -- origem, quando vier de pedido
 installment_id     BIGINT UNSIGNED NULL      -- parcela de origem
 parent_id          BIGINT UNSIGNED NULL      -- renegociação
-document_number    VARCHAR(30) NULL          -- nº do título / duplicata
+
 description        VARCHAR(180) NOT NULL
 due_date           DATE NOT NULL
 issue_date         DATE NOT NULL
