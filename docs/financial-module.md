@@ -172,9 +172,9 @@ Reaproveita a matriz existente (`backend/src/Auth/Permissions.php` +
 |------|-----------|--------|
 | Ver títulos, listas e totais | `finance.view` | owner, admin, finance |
 | Ver margem/custo/saldo devedor consolidado | `finance.view.sensitive` | owner, admin, finance |
-| Criar título, baixar, estornar, cancelar | `finance.manage` *(nova, a incluir)* | owner, admin, finance |
+| Criar título, baixar, estornar, cancelar | `finance.receivables.manage` *(nova, a incluir)* | owner, admin, finance |
 
-`finance.manage` é a única adição à matriz — necessária porque hoje `finance`
+`finance.receivables.manage` é a única adição à matriz — necessária porque hoje `finance`
 só tem permissões de leitura. Frontend esconde botão; o **backend autoriza de
 fato** com `Permissions::require`.
 
@@ -211,14 +211,14 @@ não são reescritos.
 | GET | `/finance/summary` | `finance.view` |
 | GET | `/finance/receivables` | `finance.view` |
 | GET | `/finance/receivables/{id}` | `finance.view` |
-| POST | `/finance/receivables` | `finance.manage` |
-| POST | `/finance/receivables/from-order/{orderId}` | `finance.manage` |
-| POST | `/finance/receivables/{id}/payments` | `finance.manage` |
-| POST | `/finance/receivables/{id}/cancel` | `finance.manage` |
-| POST | `/finance/receivables/{id}/renegotiate` | `finance.manage` |
+| POST | `/finance/receivables` | `finance.receivables.manage` |
+| POST | `/finance/receivables/from-order/{orderId}` | `finance.receivables.manage` |
+| POST | `/finance/receivables/{id}/payments` | `finance.receivables.manage` |
+| POST | `/finance/receivables/{id}/cancel` | `finance.receivables.manage` |
+| POST | `/finance/receivables/{id}/renegotiate` | `finance.receivables.manage` |
 | GET | `/finance/payables` | `finance.view` |
-| POST | `/finance/payables` | `finance.manage` |
-| POST | `/finance/payables/{id}/payments` | `finance.manage` |
+| POST | `/finance/payables` | `finance.receivables.manage` |
+| POST | `/finance/payables/{id}/payments` | `finance.receivables.manage` |
 | GET | `/finance/cashflow` | `finance.view` |
 | GET | `/finance/categories` | `finance.view` |
 
