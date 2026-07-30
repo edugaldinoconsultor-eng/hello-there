@@ -216,7 +216,6 @@ não são reescritos.
 | POST | `/finance/payables` | `finance.receivables.manage` |
 | POST | `/finance/payables/{id}/payments` | `finance.receivables.manage` |
 | GET | `/finance/cashflow` | `finance.view` |
-| GET | `/finance/categories` | `finance.view` |
 
 Filtros de listagem: `status`, `from`, `to`, `customer_id`, `q`, `overdue=1`,
 `page`, `page_size`. Paginação no mesmo formato já usado em Pedidos.
